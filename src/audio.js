@@ -1,70 +1,86 @@
-const noteOffsets = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 }
+import { CacheStorage, SplendidGrandPiano } from 'smplr'
 
-function frequency(note) {
-  const match = note.match(/^([A-G](?:#|b)?)(\d)$/)
-  if (!match) return 220
-  const midi = (Number(match[2]) + 1) * 12 + noteOffsets[match[1]]
-  return 440 * 2 ** ((midi - 69) / 12)
+// Recorded pitches nearest to every note used by the four lesson keys.
+// smplr pitch-shifts between these samples for accidentals such as F♯ and B♭.
+const LESSON_SAMPLE_PITCHES = [40, 43, 45, 48, 52, 55, 57]
+
+function cachedStorage() {
+  if (!window.isSecureContext || !('caches' in window)) return null
+
+  try {
+    return CacheStorage('pianobook-grand-piano-v1')
+  } catch {
+    return null
+  }
 }
 
 export class PianoEngine {
-  constructor() {
+  constructor(onLoadProgress) {
     this.context = null
-    this.nodes = []
+    this.piano = null
+    this.readyPromise = null
+    this.isReady = false
+    this.onLoadProgress = onLoadProgress
   }
 
   async ready() {
     if (!this.context) this.context = new AudioContext()
     if (this.context.state === 'suspended') await this.context.resume()
+
+    if (!this.piano) {
+      const storage = cachedStorage()
+      this.piano = SplendidGrandPiano(this.context, {
+        volume: 88,
+        velocity: 78,
+        decayTime: 1.15,
+        notesToLoad: {
+          notes: LESSON_SAMPLE_PITCHES,
+          velocityRange: [41, 84],
+        },
+        onLoadProgress: this.onLoadProgress,
+        ...(storage ? { storage } : {}),
+      })
+      this.readyPromise = this.piano.ready
+    }
+
+    await this.readyPromise
+    this.isReady = true
   }
 
   stop() {
-    this.nodes.forEach((node) => {
-      try { node.stop() } catch { /* already stopped */ }
-    })
-    this.nodes = []
-  }
-
-  playNote(note, time, duration = 0.45, volume = 0.17) {
-    const ctx = this.context
-    const gain = ctx.createGain()
-    const body = ctx.createOscillator()
-    const overtone = ctx.createOscillator()
-
-    body.type = 'triangle'
-    overtone.type = 'sine'
-    body.frequency.value = frequency(note)
-    overtone.frequency.value = frequency(note) * 2
-
-    const attack = 0.015
-    gain.gain.setValueAtTime(0.0001, time)
-    gain.gain.exponentialRampToValueAtTime(volume, time + attack)
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration)
-
-    body.connect(gain)
-    overtone.connect(gain)
-    gain.connect(ctx.destination)
-    body.start(time)
-    overtone.start(time)
-    body.stop(time + duration + 0.03)
-    overtone.stop(time + duration + 0.03)
-    this.nodes.push(body, overtone)
+    this.piano?.stop()
   }
 
   schedule(chords, sequence, tempo) {
     this.stop()
     const subdivision = sequence.length === 8 ? 0.5 : 1
     const stepSeconds = (60 / tempo) * subdivision
-    const start = this.context.currentTime + 0.08
+    const start = this.context.currentTime + 0.12
     let step = 0
 
-    chords.forEach((chord) => {
-      sequence.forEach((noteIndex) => {
-        this.playNote(chord.notes[noteIndex], start + step * stepSeconds, stepSeconds * 0.82)
+    chords.forEach((chord, chordIndex) => {
+      sequence.forEach((noteIndex, noteStep) => {
+        const isDownbeat = noteStep === 0
+        const velocity = isDownbeat ? 82 : 58 + ((chordIndex + noteStep) % 3) * 3
+        this.piano.start({
+          note: chord.notes[noteIndex],
+          time: start + step * stepSeconds,
+          duration: Math.max(0.65, stepSeconds * 1.35),
+          velocity,
+        })
         step += 1
       })
     })
 
-    return { startDelay: 80, stepMs: stepSeconds * 1000, totalSteps: step }
+    return { startDelay: 120, stepMs: stepSeconds * 1000, totalSteps: step }
+  }
+
+  dispose() {
+    this.piano?.dispose()
+    this.piano = null
+    this.context?.close()
+    this.context = null
+    this.readyPromise = null
+    this.isReady = false
   }
 }

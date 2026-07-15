@@ -6,11 +6,14 @@ import {
   ChevronDown,
   Headphones,
   Info,
+  LoaderCircle,
   Menu,
+  Moon,
   Pause,
   Play,
   RotateCcw,
   Sparkles,
+  Sun,
   Volume2,
   X,
 } from 'lucide-react'
@@ -33,7 +36,7 @@ function Logo() {
   )
 }
 
-function Header({ menuOpen, setMenuOpen }) {
+function Header({ menuOpen, setMenuOpen, theme, toggleTheme }) {
   return (
     <header className="site-header">
       <Logo />
@@ -42,19 +45,30 @@ function Header({ menuOpen, setMenuOpen }) {
         <a href="#formulas" onClick={() => setMenuOpen(false)}>Formulas</a>
         <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
       </nav>
-      <div className="header-progress" aria-label="Course progress: 18 percent">
-        <span>YOUR PROGRESS</span>
-        <div className="progress-track"><i /></div>
-        <strong>18%</strong>
+      <div className="header-actions">
+        <div className="header-progress" aria-label="Course progress: 18 percent">
+          <span>YOUR PROGRESS</span>
+          <div className="progress-track"><i /></div>
+          <strong>18%</strong>
+        </div>
+        <button
+          className="theme-button"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+          title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}
+          data-testid="theme-toggle"
+        >
+          {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        </button>
+        <button
+          className="menu-button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-expanded={menuOpen}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
-      <button
-        className="menu-button"
-        onClick={() => setMenuOpen(!menuOpen)}
-        aria-expanded={menuOpen}
-        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-      >
-        {menuOpen ? <X size={22} /> : <Menu size={22} />}
-      </button>
     </header>
   )
 }
@@ -176,22 +190,29 @@ function Keyboard({ activeNote }) {
 function PracticeStudio({ keyName, setKeyName, tempo, setTempo, pattern }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [activeStep, setActiveStep] = useState(-1)
-  const engine = useRef(new PianoEngine())
+  const [audioStatus, setAudioStatus] = useState('idle')
+  const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 })
+  const engine = useRef(null)
   const timers = useRef([])
+  const playbackRequest = useRef(0)
   const chords = keys[keyName].chords
   const activeChord = activeStep < 0 ? -1 : Math.floor(activeStep / pattern.sequence.length)
   const activeBeat = activeStep < 0 ? -1 : activeStep % pattern.sequence.length
   const activeNote = activeChord >= 0 ? chords[activeChord]?.notes[pattern.sequence[activeBeat]] : null
 
   const clearPlayback = () => {
+    playbackRequest.current += 1
     timers.current.forEach((timer) => clearTimeout(timer))
     timers.current = []
-    engine.current.stop()
+    engine.current?.stop()
     setIsPlaying(false)
     setActiveStep(-1)
   }
 
-  useEffect(() => clearPlayback, [])
+  useEffect(() => () => {
+    timers.current.forEach((timer) => clearTimeout(timer))
+    engine.current?.dispose()
+  }, [])
   useEffect(() => {
     clearPlayback()
   // The selected musical inputs intentionally reset playback.
@@ -202,7 +223,26 @@ function PracticeStudio({ keyName, setKeyName, tempo, setTempo, pattern }) {
       clearPlayback()
       return
     }
-    await engine.current.ready()
+    if (!engine.current) {
+      engine.current = new PianoEngine((progress) => setLoadProgress(progress))
+    }
+    const request = ++playbackRequest.current
+
+    try {
+      if (!engine.current.isReady) setAudioStatus('loading')
+      await engine.current.ready()
+      setAudioStatus('ready')
+    } catch (error) {
+      console.error('Unable to load the sampled piano', error)
+      engine.current.dispose()
+      engine.current = null
+      setAudioStatus('error')
+      return
+    }
+
+    // Changing a formula, key, or tempo while samples load cancels autoplay.
+    if (request !== playbackRequest.current) return
+
     const schedule = engine.current.schedule(chords, pattern.sequence, tempo)
     setIsPlaying(true)
 
@@ -264,11 +304,30 @@ function PracticeStudio({ keyName, setKeyName, tempo, setTempo, pattern }) {
           className={`play-button ${isPlaying ? 'playing' : ''}`}
           onClick={startPlayback}
           data-testid="play-practice"
+          disabled={audioStatus === 'loading'}
         >
-          <span>{isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}</span>
-          {isPlaying ? 'Stop playback' : 'Play the formula'}
+          <span>
+            {audioStatus === 'loading'
+              ? <LoaderCircle className="loading-icon" size={20} />
+              : isPlaying
+                ? <Pause size={20} fill="currentColor" />
+                : <Play size={20} fill="currentColor" />}
+          </span>
+          {audioStatus === 'loading'
+            ? `Loading grand piano${loadProgress.total ? ` · ${Math.round((loadProgress.loaded / loadProgress.total) * 100)}%` : '…'}`
+            : isPlaying
+              ? 'Stop playback'
+              : audioStatus === 'error'
+                ? 'Retry piano audio'
+                : 'Play the formula'}
         </button>
-        <div className="listen-note"><Headphones size={17} /><span>Listen for the <strong>shape</strong>,<br />not each separate note.</span></div>
+        <div className={`listen-note ${audioStatus}`} role="status" aria-live="polite">
+          <Headphones size={17} />
+          {audioStatus === 'loading' && <span>Preparing <strong>two dynamic layers</strong><br />for a natural piano sound.</span>}
+          {audioStatus === 'ready' && <span>Sampled Steinway grand.<br /><strong>Headphones recommended.</strong></span>}
+          {audioStatus === 'error' && <span>Samples couldn’t load.<br /><strong>Check your connection and retry.</strong></span>}
+          {audioStatus === 'idle' && <span>Listen for the <strong>shape</strong>,<br />not each separate note.</span>}
+        </div>
       </div>
     </section>
   )
@@ -318,11 +377,21 @@ function App() {
   const [keyName, setKeyName] = useState('C')
   const [tempo, setTempo] = useState(72)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light')
   const pattern = useMemo(() => patterns[selectedPattern], [selectedPattern])
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = nextTheme
+    document.documentElement.style.colorScheme = nextTheme
+    document.querySelector('#theme-color')?.setAttribute('content', nextTheme === 'dark' ? '#171a18' : '#f4f1e9')
+    localStorage.setItem('pianobook-theme', nextTheme)
+    setTheme(nextTheme)
+  }
 
   return (
     <div id="top">
-      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} theme={theme} toggleTheme={toggleTheme} />
       <main>
         <div className="course-layout" id="lesson">
           <ChapterRail />

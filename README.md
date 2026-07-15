@@ -17,6 +17,10 @@ The broader aim is to develop a collection of **piano formulas**: reusable rules
 - Tailwind CSS
 - GitHub Pages
 
+## Audio
+
+Playback uses `smplr` with a focused set of public-domain Splendid Grand Piano samples. The recordings are downloaded on first play and cached by supported browsers, keeping the application bundle small while providing a much more natural piano sound.
+
 The site is a static frontend application and will be deployed to the `/pianobook` path of the repository owner's default GitHub Pages site.
 
 ## Local development

@@ -77,12 +77,30 @@ export const patterns = [
     sequence: [0, 1, 2, 1, 0, 1, 2, 1],
     beats: ['1', '&', '2', '&', '3', '&', '4', '&'],
     level: 'Expansive',
+    subdivision: 0.5,
+    meter: 4,
   },
-]
-
-export const chapters = [
-  { number: '01', title: 'The foundation', detail: 'Make harmony move', active: true },
-  { number: '02', title: 'Add color', detail: 'Sevenths & tensions' },
-  { number: '03', title: 'Create motion', detail: 'Rhythm & groove' },
-  { number: '04', title: 'Shape a song', detail: 'Intro to ending' },
+  {
+    id: 'alberti',
+    short: '05',
+    name: 'Turning pulse',
+    subtitle: 'Gentle & buoyant',
+    description: 'Turn root, fifth, third, fifth into a balanced pulse that keeps moving without becoming heavy.',
+    sequence: [0, 2, 1, 2],
+    beats: ['Root', 'Fifth', 'Third', 'Fifth'],
+    level: 'Classic',
+    meter: 4,
+  },
+  {
+    id: 'waltz',
+    short: '06',
+    name: 'Waltz sway',
+    subtitle: 'Lilting & graceful',
+    description: 'Ground beat one with the root, then let two lighter pairs of notes carry the bar in three.',
+    sequence: [0, 1, 2, 1, 2, 1],
+    beats: ['1', '&', '2', '&', '3', '&'],
+    level: 'Three-beat',
+    subdivision: 0.5,
+    meter: 3,
+  },
 ]

@@ -51,9 +51,8 @@ export class PianoEngine {
     this.piano?.stop()
   }
 
-  schedule(chords, sequence, tempo) {
+  schedule(chords, sequence, tempo, subdivision = sequence.length === 8 ? 0.5 : 1) {
     this.stop()
-    const subdivision = sequence.length === 8 ? 0.5 : 1
     const stepSeconds = (60 / tempo) * subdivision
     const start = this.context.currentTime + 0.12
     let step = 0

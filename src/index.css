@@ -83,7 +83,9 @@ a { color: inherit; text-decoration: none; }
 .eyebrow, .step-label { margin: 0; color: var(--red); font-size: 10px; font-weight: 800; letter-spacing: .17em; }
 .chapter-list { margin-top: 26px; position: relative; }
 .chapter-list::before { content: ''; position: absolute; top: 19px; bottom: 34px; left: 17px; border-left: 1px dashed var(--line); }
-.chapter { min-height: 75px; display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: start; position: relative; color: var(--muted); }
+.chapter { min-height: 75px; position: relative; color: var(--muted); }
+.chapter-heading { width: 100%; display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: start; padding: 0; color: inherit; background: transparent; border: 0; text-align: left; cursor: pointer; }
+.chapter-heading:hover strong { color: var(--ink); }
 .chapter-number { width: 35px; height: 35px; background: var(--paper); border: 1px solid var(--line); border-radius: 50%; display: grid; place-items: center; font-family: Georgia, serif; font-size: 11px; z-index: 1; }
 .chapter strong { display: block; color: var(--muted); font-family: Georgia, serif; font-size: 15px; font-weight: normal; margin: 2px 0 5px; }
 .chapter span { display: block; font-size: 10px; }
@@ -91,12 +93,19 @@ a { color: inherit; text-decoration: none; }
 .chapter.active strong { color: var(--ink); font-weight: bold; }
 .chapter-state { color: var(--red); font-weight: 800; font-size: 8px !important; margin-top: 6px; }
 .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 5px color-mix(in srgb, var(--red) 12%, transparent); }
+.rail-lessons { margin: 8px 0 20px 48px; display: grid; gap: 2px; }
+.rail-lessons button { display: grid; grid-template-columns: 20px 1fr auto; gap: 7px; align-items: center; width: 100%; padding: 8px 9px; color: var(--muted); background: transparent; border: 0; border-left: 1px solid var(--line); font-family: Georgia, serif; font-size: 11px; line-height: 1.35; text-align: left; cursor: pointer; }
+.rail-lessons button > span { color: var(--muted); font-family: Inter, sans-serif; font-size: 8px; font-weight: 800; }
+.rail-lessons button:hover, .rail-lessons button.current { color: var(--ink); background: var(--surface); border-left-color: var(--red); }
+.rail-lessons button.current { font-weight: bold; }
+.rail-lessons button svg { color: var(--red); }
 .rail-note { margin-top: 38px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); display: flex; align-items: flex-start; gap: 10px; }
 .rail-note svg { color: var(--red); flex: none; }
 .rail-note p { font-family: Georgia, serif; font-size: 12px; line-height: 1.5; margin: 0; }
 .rail-note strong { color: var(--ink); }
 
 .lesson-content { min-width: 0; }
+.mobile-course-nav { display: none; }
 .lesson-hero { padding: 72px clamp(38px, 7vw, 105px) 66px; position: relative; overflow: hidden; }
 .lesson-hero::after { content: '𝄞'; position: absolute; color: color-mix(in srgb, var(--ink) 4%, transparent); font-family: Georgia, serif; font-size: 340px; right: 4%; top: -75px; transform: rotate(-8deg); pointer-events: none; }
 .hero-meta { display: flex; align-items: center; gap: 13px; color: var(--red); font-size: 9px; font-weight: 800; letter-spacing: .16em; }
@@ -114,7 +123,8 @@ a { color: inherit; text-decoration: none; }
 .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 30px; margin-bottom: 28px; }
 .section-heading h2, .studio-topline h2 { margin: 8px 0 0; font-family: Georgia, serif; font-size: clamp(28px, 3vw, 39px); letter-spacing: -.025em; }
 .section-heading p { margin: 0; max-width: 310px; color: var(--muted); font-family: Georgia, serif; font-size: 13px; line-height: 1.5; text-align: right; }
-.pattern-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 10px; }
+.pattern-count-2 { grid-template-columns: repeat(2, minmax(145px, 260px)); }
 .pattern-card { min-height: 170px; background: transparent; border: 1px solid var(--line); padding: 18px; text-align: left; cursor: pointer; position: relative; transition: transform .22s ease, border-color .22s ease, background .22s ease; }
 .pattern-card:hover { transform: translateY(-3px); border-color: var(--muted); background: var(--surface); }
 .pattern-card.selected { background: var(--surface); border: 1.5px solid var(--red); box-shadow: 0 10px 24px color-mix(in srgb, #000 12%, transparent); }
@@ -194,6 +204,36 @@ a { color: inherit; text-decoration: none; }
 .note-kicker, .next-lesson > div > span { color: var(--red); font-size: 8px; font-weight: 800; letter-spacing: .16em; }
 .learning-notes h3 { font-family: Georgia, serif; font-size: 18px; margin: 7px 0 8px; }
 .learning-notes p { font-family: Georgia, serif; font-size: 12px; line-height: 1.65; color: var(--muted); margin: 0; }
+.practice-challenge { margin: 60px clamp(38px, 7vw, 105px) 0; padding: 38px; background: var(--surface); border: 1px solid var(--line); }
+.challenge-heading { display: grid; grid-template-columns: 46px minmax(210px, .8fr) 1fr; align-items: center; gap: 18px; }
+.challenge-icon { width: 46px; height: 46px; display: grid; place-items: center; color: var(--red); border: 1px solid var(--line); border-radius: 50%; }
+.challenge-heading h2 { margin: 6px 0 0; font-family: Georgia, serif; font-size: 27px; }
+.challenge-heading > p { margin: 0; color: var(--muted); font-family: Georgia, serif; font-size: 12px; line-height: 1.6; }
+.challenge-list { margin-top: 28px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.challenge-list button { min-height: 90px; display: flex; align-items: center; gap: 13px; padding: 18px; color: var(--ink); background: transparent; border: 0; border-right: 1px solid var(--line); font-family: Georgia, serif; font-size: 12px; line-height: 1.45; text-align: left; cursor: pointer; }
+.challenge-list button:last-child { border-right: 0; }
+.challenge-list button:hover { background: color-mix(in srgb, var(--red) 5%, transparent); }
+.challenge-list button > span { flex: none; width: 27px; height: 27px; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); border-radius: 50%; font-family: Inter, sans-serif; font-size: 9px; font-weight: 800; }
+.challenge-list button.checked { color: var(--muted); text-decoration: line-through; }
+.challenge-list button.checked > span { color: white; background: var(--red); border-color: var(--red); }
+.complete-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 24px; }
+.complete-row p { margin: 0; color: var(--muted); font-family: Georgia, serif; font-size: 11px; font-style: italic; }
+.complete-row button { display: flex; align-items: center; gap: 9px; padding: 12px 17px; color: white; background: var(--red); border: 1px solid var(--red); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.complete-row button:hover { background: var(--red-dark); }
+.complete-row button.is-complete { color: var(--red); background: transparent; }
+.lesson-navigation { margin: 50px clamp(38px, 7vw, 105px) 80px; padding: 34px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: minmax(150px, .55fr) 1fr; align-items: center; gap: 42px; }
+.previous-lesson { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--muted); background: transparent; border: 0; font-family: Georgia, serif; font-size: 12px; text-align: left; cursor: pointer; }
+.previous-lesson:hover { color: var(--red); }
+.previous-lesson span, .previous-lesson small { display: block; }
+.previous-lesson small, .next-copy > span { margin-bottom: 5px; color: var(--red); font-family: Inter, sans-serif; font-size: 8px; font-weight: 800; letter-spacing: .16em; }
+.next-copy { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 25px; }
+.next-copy > span { grid-column: 1 / -1; }
+.next-copy h2 { margin: 2px 0; font-family: Georgia, serif; font-size: 25px; }
+.next-copy button { display: flex; align-items: center; gap: 9px; padding: 11px 0; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--red); font-size: 9px; font-weight: 800; letter-spacing: .12em; cursor: pointer; }
+.next-copy button:hover { color: var(--red); }
+.final-copy { display: block; }
+.final-copy p { margin: 8px 0 0; color: var(--muted); font-family: Georgia, serif; font-size: 12px; line-height: 1.5; }
+.course-complete { border-color: var(--red); }
 .next-lesson { margin: 65px clamp(38px, 7vw, 105px) 80px; padding: 38px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 85px 1fr auto; align-items: center; gap: 25px; }
 .next-number { font-family: Georgia, serif; color: color-mix(in srgb, var(--muted) 65%, transparent); font-size: 56px; font-style: italic; }
 .next-lesson h2 { font-family: Georgia, serif; font-size: 25px; margin: 6px 0; }
@@ -225,6 +265,13 @@ footer > span { justify-self: end; font-size: 9px; letter-spacing: .1em; }
   .main-nav a::after { display: none; }
   .course-layout { display: block; }
   .chapter-rail { display: none; }
+  .mobile-course-nav { min-height: 74px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 20px; padding: 13px 24px; background: var(--paper-deep); border-bottom: 1px solid var(--line); }
+  .mobile-course-nav > div:first-child { display: flex; flex-direction: column; gap: 3px; }
+  .mobile-course-nav span { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+  .mobile-course-nav strong { font-family: Georgia, serif; font-size: 12px; }
+  .mobile-lesson-select { min-width: 0; display: flex; align-items: center; border-bottom: 1px solid var(--line); }
+  .mobile-lesson-select select { min-width: 0; width: 100%; padding: 9px 22px 9px 0; color: var(--ink); background: transparent; border: 0; outline: 0; appearance: none; font-family: Georgia, serif; font-size: 12px; text-overflow: ellipsis; }
+  .mobile-lesson-select svg { margin-left: -18px; pointer-events: none; }
   .lesson-hero { padding: 52px 24px 44px; }
   .lesson-hero::after { font-size: 220px; right: -40px; top: -35px; }
   .lesson-hero h1 { font-size: clamp(46px, 13vw, 58px); }
@@ -251,6 +298,16 @@ footer > span { justify-self: end; font-size: 9px; letter-spacing: .1em; }
   .listen-note { grid-column: 1 / -1; margin-top: 8px; }
   .play-button { min-width: 0; width: 100%; }
   .learning-notes { padding: 46px 24px; grid-template-columns: 1fr; gap: 34px; }
+  .practice-challenge { margin: 46px 24px 0; padding: 27px 22px; }
+  .challenge-heading { grid-template-columns: 46px 1fr; }
+  .challenge-heading > p { grid-column: 1 / -1; }
+  .challenge-list { grid-template-columns: 1fr; }
+  .challenge-list button { min-height: 70px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .challenge-list button:last-child { border-bottom: 0; }
+  .complete-row { align-items: flex-start; flex-direction: column; }
+  .lesson-navigation { margin: 42px 24px 60px; grid-template-columns: 1fr; gap: 24px; }
+  .next-copy { grid-template-columns: 1fr; }
+  .next-copy button { justify-self: start; margin-top: 12px; }
   .next-lesson { margin: 50px 24px 60px; grid-template-columns: 58px 1fr; }
   .next-number { font-size: 42px; }
   .next-lesson button { grid-column: 2; justify-self: start; }

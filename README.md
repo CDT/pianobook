@@ -4,11 +4,18 @@ Piano Book is an interactive, frontend-only guide to practical popular-piano acc
 
 It is designed for pianists who already understand the basics of music theory—including reading staff notation, chords, rhythm, meter, keys, cadences, and chord progressions—and want to turn that knowledge into confident, musical playing.
 
-## Goal
+## What is included
 
-The first milestone is to help learners accompany any melody with a beautiful left-hand chord pattern.
+The first course is a complete, four-chapter path for turning chord knowledge into musical left-hand accompaniment:
 
-The broader aim is to develop a collection of **piano formulas**: reusable rules and patterns for playing a wide range of popular music. The focus is practical accompaniment, not advanced classical repertoire.
+- 12 concise lessons covering harmony, color, rhythm, touch, arranging, intros, and endings
+- 6 reusable accompaniment formulas, including broken chords, rolling eighths, and a three-beat waltz
+- Interactive playback in C, D, F, and G major with adjustable tempo
+- Lesson-specific listening cues, playing advice, and three-part practice challenges
+- Persistent course progress and last-lesson restoration using browser storage
+- Responsive course navigation and light/dark themes
+
+The focus is practical popular-piano accompaniment, not advanced classical repertoire. Learners should already be comfortable reading chord symbols and keeping a basic pulse.
 
 ## Technology
 
@@ -21,7 +28,11 @@ The broader aim is to develop a collection of **piano formulas**: reusable rules
 
 Playback uses `smplr` with a focused set of public-domain Splendid Grand Piano samples. The recordings are downloaded on first play and cached by supported browsers, keeping the application bundle small while providing a much more natural piano sound.
 
-The site is a static frontend application and will be deployed to the `/pianobook` path of the repository owner's default GitHub Pages site.
+## Live site
+
+[Open Piano Book](https://cdt.is-a.dev/pianobook/)
+
+The trailing slash in `/pianobook/` is intentional. The Vite base path and GitHub Pages deployment both use it.
 
 ## Local development
 
@@ -34,6 +45,11 @@ Create a production build with `npm run build`. The generated site is written to
 
 Pushes to `main` are automatically built and published by the included GitHub Pages workflow. Configure the repository's Pages source as **GitHub Actions** before the first deployment.
 
-## Status
+## Verification
 
-Piano Book is under active development.
+```bash
+npm run lint
+npm run build
+```
+
+The application is frontend-only and does not require environment variables or a backend service.

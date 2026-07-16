@@ -23,6 +23,7 @@ import {
 import { PianoEngine } from './audio.js'
 import { course, lessons } from './course.js'
 import { keys, patterns } from './data.js'
+import { demoPieces } from './demoMusic.js'
 
 const PROGRESS_KEY = 'pianobook-progress-v1'
 const CURRENT_LESSON_KEY = 'pianobook-current-lesson'
@@ -64,6 +65,7 @@ function Header({ menuOpen, setMenuOpen, theme, toggleTheme, completedCount }) {
         <a className="active" href="#course" onClick={() => setMenuOpen(false)}>Lessons</a>
         <a href="#formulas" onClick={() => setMenuOpen(false)}>Formulas</a>
         <a href="#about" onClick={() => setMenuOpen(false)}>Practice</a>
+        <a href="#demo-music" onClick={() => setMenuOpen(false)}>Demos</a>
       </nav>
       <div className="header-actions">
         <div className="header-progress" aria-label={`Course progress: ${percent} percent`}>
@@ -457,6 +459,142 @@ function LessonNavigation({ previous, next, onNavigate, courseComplete }) {
   )
 }
 
+function pitchPosition(pitch) {
+  const match = pitch.match(/^([A-G])([#b]?)(\d)$/)
+  if (!match) return { y: 60, accidental: '' }
+  const [, letter, accidental, octave] = match
+  const scaleIndex = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }[letter]
+  const stepsFromE4 = (Number(octave) - 4) * 7 + scaleIndex - 2
+  return { y: 78 - stepsFromE4 * 5, accidental: accidental === 'b' ? '♭' : accidental === '#' ? '♯' : '' }
+}
+
+function MusicStaff({ piece, activeNote }) {
+  const left = 72
+  const width = 824
+  const xForBeat = (beat) => left + (beat / piece.totalBeats) * width
+
+  return (
+    <svg className="music-staff" viewBox="0 0 930 132" role="img" aria-label={`${piece.title} melody excerpt in ${piece.key}`}>
+      <g className="staff-lines">
+        {[38, 48, 58, 68, 78].map((y) => <line x1="46" x2="906" y1={y} y2={y} key={y} />)}
+      </g>
+      <text className="clef" x="47" y="77">𝄞</text>
+      <text className="time-signature" x="66" y="52">{piece.meterLabel.split('/')[0]}</text>
+      <text className="time-signature" x="66" y="70">{piece.meterLabel.split('/')[1]}</text>
+      {Array.from({ length: piece.totalBeats / piece.meter + 1 }, (_, index) => (
+        <line className="bar-line" x1={xForBeat(index * piece.meter)} x2={xForBeat(index * piece.meter)} y1="38" y2="78" key={index} />
+      ))}
+      {piece.melody.map((event, index) => {
+        const { y, accidental } = pitchPosition(event.notes[0])
+        const x = xForBeat(event.beat + Math.min(event.duration, 0.5) * 0.35)
+        const open = event.duration >= 1.5
+        const stemUp = y > 53
+        return (
+          <g className={`score-note ${activeNote === index ? 'active' : ''}`} key={`${event.beat}-${event.notes[0]}-${index}`}>
+            {accidental && <text className="accidental" x={x - 13} y={y + 4}>{accidental}</text>}
+            {(y >= 83 || y <= 33) && <line className="ledger-line" x1={x - 8} x2={x + 8} y1={y} y2={y} />}
+            <ellipse className={open ? 'open' : ''} cx={x} cy={y} rx="5.5" ry="4" transform={`rotate(-18 ${x} ${y})`} />
+            <line className="note-stem" x1={stemUp ? x + 5 : x - 5} x2={stemUp ? x + 5 : x - 5} y1={y} y2={stemUp ? y - 25 : y + 25} />
+            {event.duration < 0.75 && <path className="note-flag" d={stemUp ? `M ${x + 5} ${y - 25} q 12 7 5 16` : `M ${x - 5} ${y + 25} q -12 -7 -5 -16`} />}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function DemoMusic() {
+  const [playingId, setPlayingId] = useState(null)
+  const [activeNotes, setActiveNotes] = useState({})
+  const [audioStatus, setAudioStatus] = useState('idle')
+  const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 })
+  const engine = useRef(null)
+  const timers = useRef([])
+  const playbackRequest = useRef(0)
+
+  const stopPlayback = () => {
+    playbackRequest.current += 1
+    timers.current.forEach((timer) => clearTimeout(timer))
+    timers.current = []
+    engine.current?.stop()
+    setPlayingId(null)
+    setActiveNotes({})
+  }
+
+  useEffect(() => () => {
+    timers.current.forEach((timer) => clearTimeout(timer))
+    engine.current?.dispose()
+  }, [])
+
+  const play = async (piece) => {
+    if (playingId === piece.id) {
+      stopPlayback()
+      return
+    }
+    stopPlayback()
+    if (!engine.current) engine.current = new PianoEngine((progress) => setLoadProgress(progress))
+    const request = ++playbackRequest.current
+
+    try {
+      if (!engine.current.isReady) setAudioStatus('loading')
+      await engine.current.ready()
+      setAudioStatus('ready')
+    } catch (error) {
+      console.error('Unable to load demo piano audio', error)
+      engine.current?.dispose()
+      engine.current = null
+      setAudioStatus('error')
+      return
+    }
+
+    if (request !== playbackRequest.current) return
+    const schedule = engine.current.scheduleEvents(piece.events, piece.tempo)
+    setPlayingId(piece.id)
+    piece.melody.forEach((event, index) => {
+      timers.current.push(setTimeout(() => setActiveNotes({ [piece.id]: index }), schedule.startDelay + event.beat * schedule.beatMs))
+    })
+    timers.current.push(setTimeout(stopPlayback, schedule.startDelay + schedule.totalBeats * schedule.beatMs + 180))
+  }
+
+  return (
+    <section className="demo-music" id="demo-music" aria-labelledby="demo-music-title">
+      <div className="demo-heading">
+        <div><span className="eyebrow">LISTENING ROOM</span><h2 id="demo-music-title">Three scores, brought to life.</h2></div>
+        <p>Follow the highlighted melody while a learner-friendly piano arrangement plays. Each excerpt preserves the source key, meter, and theme.</p>
+      </div>
+      <div className="demo-list">
+        {demoPieces.map((piece, index) => {
+          const playing = playingId === piece.id
+          return (
+            <article className={`demo-piece ${playing ? 'is-playing' : ''}`} key={piece.id}>
+              <div className="demo-number">0{index + 1}</div>
+              <div className="demo-copy">
+                <span>{piece.key.toUpperCase()} · {piece.meterLabel} · {piece.tempo} BPM</span>
+                <h3>{piece.title}{piece.subtitle && <small>{piece.subtitle}</small>}</h3>
+                <p>{piece.composer}</p>
+                <em>{piece.character}</em>
+              </div>
+              <div className="score-wrap"><MusicStaff piece={piece} activeNote={activeNotes[piece.id]} /></div>
+              <div className="demo-actions">
+                <button data-testid={`play-demo-${piece.id}`} onClick={() => play(piece)} disabled={audioStatus === 'loading'} aria-label={`${playing ? 'Stop' : 'Play'} ${piece.title}`}>
+                  <span>{audioStatus === 'loading' ? <LoaderCircle className="loading-icon" size={18} /> : playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}</span>
+                  {audioStatus === 'loading' ? `${loadProgress.total ? Math.round((loadProgress.loaded / loadProgress.total) * 100) : 0}%` : playing ? 'Stop' : 'Listen'}
+                </button>
+                <a href={piece.sourceUrl} target="_blank" rel="noreferrer">Public-domain score ↗</a>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+      <p className={`demo-status ${audioStatus}`} role="status" aria-live="polite">
+        {audioStatus === 'loading' && 'Preparing the sampled grand piano…'}
+        {audioStatus === 'ready' && 'Sampled grand piano ready. Select any score to listen.'}
+        {audioStatus === 'error' && 'The piano samples could not load. Check your connection and try again.'}
+      </p>
+    </section>
+  )
+}
+
 function App() {
   const [currentIndex, setCurrentIndex] = useState(storedLessonIndex)
   const [completed, setCompleted] = useState(storedProgress)
@@ -530,6 +668,7 @@ function App() {
             />
           </div>
         </div>
+        <DemoMusic />
       </main>
       <footer>
         <Logo />

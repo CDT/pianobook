@@ -2,7 +2,7 @@ import { CacheStorage, SplendidGrandPiano } from 'smplr'
 
 // Recorded pitches nearest to every note used by the four lesson keys.
 // smplr pitch-shifts between these samples for accidentals such as F♯ and B♭.
-const LESSON_SAMPLE_PITCHES = [40, 43, 45, 48, 52, 55, 57]
+const LESSON_SAMPLE_PITCHES = [40, 43, 45, 48, 52, 55, 57, 60, 64, 67, 72, 76, 79]
 
 function cachedStorage() {
   if (!window.isSecureContext || !('caches' in window)) return null
@@ -72,6 +72,25 @@ export class PianoEngine {
     })
 
     return { startDelay: 120, stepMs: stepSeconds * 1000, totalSteps: step }
+  }
+
+  scheduleEvents(events, tempo) {
+    this.stop()
+    const beatSeconds = 60 / tempo
+    const start = this.context.currentTime + 0.12
+    let totalBeats = 0
+
+    events.forEach((event) => {
+      event.notes.forEach((note) => this.piano.start({
+        note,
+        time: start + event.beat * beatSeconds,
+        duration: Math.max(0.12, event.duration * beatSeconds * 0.92),
+        velocity: event.velocity ?? 68,
+      }))
+      totalBeats = Math.max(totalBeats, event.beat + event.duration)
+    })
+
+    return { startDelay: 120, beatMs: beatSeconds * 1000, totalBeats }
   }
 
   dispose() {

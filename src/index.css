@@ -69,11 +69,6 @@ a { color: inherit; text-decoration: none; }
 .main-nav a:hover, .main-nav a.active { color: var(--ink); }
 .main-nav a:hover::after, .main-nav a.active::after { right: 0; }
 .header-actions { justify-self: end; display: flex; align-items: center; gap: 14px; }
-.header-progress { display: grid; grid-template-columns: auto 100px auto; align-items: center; gap: 10px; }
-.header-progress span { font-size: 9px; font-weight: 800; letter-spacing: .13em; color: var(--muted); }
-.header-progress strong { font-family: Georgia, serif; font-size: 14px; }
-.progress-track { height: 3px; background: var(--line); overflow: hidden; }
-.progress-track i { display: block; width: 18%; height: 100%; background: var(--red); }
 .theme-button { width: 38px; height: 38px; display: grid; place-items: center; padding: 0; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 50%; cursor: pointer; transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
 .theme-button:hover { color: var(--red); border-color: var(--red); background: var(--surface); transform: rotate(8deg); }
 .menu-button { display: none; border: 0; background: transparent; padding: 8px; justify-self: end; }
@@ -98,7 +93,6 @@ a { color: inherit; text-decoration: none; }
 .rail-lessons button > span { color: var(--muted); font-family: Inter, sans-serif; font-size: 8px; font-weight: 800; }
 .rail-lessons button:hover, .rail-lessons button.current { color: var(--ink); background: var(--surface); border-left-color: var(--red); }
 .rail-lessons button.current { font-weight: bold; }
-.rail-lessons button svg { color: var(--red); }
 .rail-note { margin-top: 38px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); display: flex; align-items: flex-start; gap: 10px; }
 .rail-note svg { color: var(--red); flex: none; }
 .rail-note p { font-family: Georgia, serif; font-size: 12px; line-height: 1.5; margin: 0; }
@@ -216,11 +210,6 @@ a { color: inherit; text-decoration: none; }
 .challenge-list button > span { flex: none; width: 27px; height: 27px; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line); border-radius: 50%; font-family: Inter, sans-serif; font-size: 9px; font-weight: 800; }
 .challenge-list button.checked { color: var(--muted); text-decoration: line-through; }
 .challenge-list button.checked > span { color: white; background: var(--red); border-color: var(--red); }
-.complete-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 24px; }
-.complete-row p { margin: 0; color: var(--muted); font-family: Georgia, serif; font-size: 11px; font-style: italic; }
-.complete-row button { display: flex; align-items: center; gap: 9px; padding: 12px 17px; color: white; background: var(--red); border: 1px solid var(--red); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
-.complete-row button:hover { background: var(--red-dark); }
-.complete-row button.is-complete { color: var(--red); background: transparent; }
 .lesson-navigation { margin: 50px clamp(38px, 7vw, 105px) 80px; padding: 34px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: minmax(150px, .55fr) 1fr; align-items: center; gap: 42px; }
 .previous-lesson { display: flex; align-items: center; gap: 12px; padding: 12px 0; color: var(--muted); background: transparent; border: 0; font-family: Georgia, serif; font-size: 12px; text-align: left; cursor: pointer; }
 .previous-lesson:hover { color: var(--red); }
@@ -233,7 +222,6 @@ a { color: inherit; text-decoration: none; }
 .next-copy button:hover { color: var(--red); }
 .final-copy { display: block; }
 .final-copy p { margin: 8px 0 0; color: var(--muted); font-family: Georgia, serif; font-size: 12px; line-height: 1.5; }
-.course-complete { border-color: var(--red); }
 .next-lesson { margin: 65px clamp(38px, 7vw, 105px) 80px; padding: 38px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); display: grid; grid-template-columns: 85px 1fr auto; align-items: center; gap: 25px; }
 .next-number { font-family: Georgia, serif; color: color-mix(in srgb, var(--muted) 65%, transparent); font-size: 56px; font-style: italic; }
 .next-lesson h2 { font-family: Georgia, serif; font-size: 25px; margin: 6px 0; }
@@ -286,8 +274,6 @@ footer > span { justify-self: end; font-size: 9px; letter-spacing: .1em; }
   .pattern-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pattern-card { min-height: 145px; }
   .pattern-icon { height: 38px; }
-  .header-progress span { display: none; }
-  .header-progress { grid-template-columns: 85px auto; }
   .main-nav { gap: 25px; }
   .demo-piece { grid-template-columns: 40px 210px minmax(320px, 1fr); }
   .demo-actions { grid-column: 2 / -1; grid-row: 2; display: flex; align-items: center; }
@@ -295,7 +281,6 @@ footer > span { justify-self: end; font-size: 9px; letter-spacing: .1em; }
 
 @media (max-width: 760px) {
   .site-header { height: 72px; padding: 0 20px; grid-template-columns: 1fr auto; }
-  .header-progress { display: none; }
   .menu-button { display: grid; color: var(--ink); }
   .main-nav { display: none; position: absolute; top: 72px; left: 0; right: 0; height: auto; background: var(--paper); border-bottom: 1px solid var(--line); padding: 10px 20px 20px; flex-direction: column; align-items: stretch; gap: 0; }
   .main-nav.is-open { display: flex; }
@@ -342,7 +327,6 @@ footer > span { justify-self: end; font-size: 9px; letter-spacing: .1em; }
   .challenge-list { grid-template-columns: 1fr; }
   .challenge-list button { min-height: 70px; border-right: 0; border-bottom: 1px solid var(--line); }
   .challenge-list button:last-child { border-bottom: 0; }
-  .complete-row { align-items: flex-start; flex-direction: column; }
   .lesson-navigation { margin: 42px 24px 60px; grid-template-columns: 1fr; gap: 24px; }
   .next-copy { grid-template-columns: 1fr; }
   .next-copy button { justify-self: start; margin-top: 12px; }

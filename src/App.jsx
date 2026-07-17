@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   Check,
-  CheckCircle2,
   ChevronDown,
   Headphones,
   Info,
@@ -25,22 +24,12 @@ import { course, lessons } from './course.js'
 import { keys, patterns } from './data.js'
 import { demoPieces } from './demoMusic.js'
 
-const PROGRESS_KEY = 'pianobook-progress-v1'
 const CURRENT_LESSON_KEY = 'pianobook-current-lesson'
 
 function storedLessonIndex() {
   const savedId = localStorage.getItem(CURRENT_LESSON_KEY)
   const index = lessons.findIndex((lesson) => lesson.id === savedId)
   return index >= 0 ? index : 0
-}
-
-function storedProgress() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')
-    return new Set(Array.isArray(saved) ? saved.filter((id) => lessons.some((lesson) => lesson.id === id)) : [])
-  } catch {
-    return new Set()
-  }
 }
 
 function Logo() {
@@ -55,9 +44,7 @@ function Logo() {
   )
 }
 
-function Header({ menuOpen, setMenuOpen, theme, toggleTheme, completedCount }) {
-  const percent = Math.round((completedCount / lessons.length) * 100)
-
+function Header({ menuOpen, setMenuOpen, theme, toggleTheme }) {
   return (
     <header className="site-header">
       <Logo />
@@ -68,11 +55,6 @@ function Header({ menuOpen, setMenuOpen, theme, toggleTheme, completedCount }) {
         <a href="#demo-music" onClick={() => setMenuOpen(false)}>Demos</a>
       </nav>
       <div className="header-actions">
-        <div className="header-progress" aria-label={`Course progress: ${percent} percent`}>
-          <span>YOUR PROGRESS</span>
-          <div className="progress-track"><i style={{ width: `${percent}%` }} /></div>
-          <strong>{percent}%</strong>
-        </div>
         <button
           className="theme-button"
           onClick={toggleTheme}
@@ -95,20 +77,19 @@ function Header({ menuOpen, setMenuOpen, theme, toggleTheme, completedCount }) {
   )
 }
 
-function ChapterRail({ currentLesson, completed, onNavigate }) {
+function ChapterRail({ currentLesson, onNavigate }) {
   return (
     <aside className="chapter-rail" aria-label="Course chapters">
       <p className="eyebrow">THE COURSE · {lessons.length} LESSONS</p>
       <div className="chapter-list">
         {course.map((chapter) => {
           const active = chapter.id === currentLesson.chapterId
-          const chapterComplete = chapter.lessons.every((lesson) => completed.has(lesson.id))
 
           return (
             <div className={`chapter ${active ? 'active' : ''}`} key={chapter.id}>
               <button className="chapter-heading" onClick={() => onNavigate(chapter.lessons[0].id)} aria-expanded={active}>
                 <div className="chapter-number">
-                  {chapterComplete ? <Check size={14} /> : active ? <span className="pulse-dot" /> : chapter.number}
+                  {active ? <span className="pulse-dot" /> : chapter.number}
                 </div>
                 <div>
                   <strong>{chapter.title}</strong>
@@ -126,7 +107,6 @@ function ChapterRail({ currentLesson, completed, onNavigate }) {
                     >
                       <span>{String(index + 1).padStart(2, '0')}</span>
                       {lesson.title} {lesson.accent}
-                      {completed.has(lesson.id) && <CheckCircle2 size={13} />}
                     </button>
                   ))}
                 </div>
@@ -143,7 +123,7 @@ function ChapterRail({ currentLesson, completed, onNavigate }) {
   )
 }
 
-function MobileCourseNav({ lessonIndex, completed, onSelectLesson }) {
+function MobileCourseNav({ lessonIndex, onSelectLesson }) {
   return (
     <div className="mobile-course-nav" aria-label="Choose a lesson">
       <div>
@@ -154,7 +134,7 @@ function MobileCourseNav({ lessonIndex, completed, onSelectLesson }) {
         <select value={lessonIndex} onChange={(event) => onSelectLesson(Number(event.target.value))} aria-label="Current course lesson">
           {lessons.map((lesson, index) => (
             <option key={lesson.id} value={index}>
-              {completed.has(lesson.id) ? '✓ ' : ''}{index + 1}. {lesson.title} {lesson.accent}
+              {index + 1}. {lesson.title} {lesson.accent}
             </option>
           ))}
         </select>
@@ -402,9 +382,8 @@ function LearningNotes({ lesson }) {
   )
 }
 
-function PracticeChallenge({ lesson, isComplete, onComplete }) {
+function PracticeChallenge({ lesson }) {
   const [checked, setChecked] = useState([])
-  const allChecked = checked.length === lesson.challenge.length
 
   const toggle = (index) => {
     setChecked((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])
@@ -424,19 +403,13 @@ function PracticeChallenge({ lesson, isComplete, onComplete }) {
           </button>
         ))}
       </div>
-      <div className="complete-row">
-        <p>{isComplete ? 'Lesson saved as complete. You can revisit it anytime.' : allChecked ? 'Beautiful. That is the work.' : 'Tick each pass as you practice, then save the lesson.'}</p>
-        <button className={isComplete ? 'is-complete' : ''} onClick={onComplete}>
-          <CheckCircle2 size={17} /> {isComplete ? 'Completed' : 'Mark lesson complete'}
-        </button>
-      </div>
     </section>
   )
 }
 
-function LessonNavigation({ previous, next, onNavigate, courseComplete }) {
+function LessonNavigation({ previous, next, onNavigate }) {
   return (
-    <section className={`lesson-navigation ${courseComplete ? 'course-complete' : ''}`} aria-label="Lesson navigation">
+    <section className="lesson-navigation" aria-label="Lesson navigation">
       {previous ? (
         <button className="previous-lesson" onClick={() => onNavigate(previous.id)}>
           <ArrowLeft size={16} /><span><small>PREVIOUS</small>{previous.title} {previous.accent}</span>
@@ -450,9 +423,9 @@ function LessonNavigation({ previous, next, onNavigate, courseComplete }) {
         </div>
       ) : (
         <div className="next-copy final-copy">
-          <span>{courseComplete ? 'COURSE COMPLETE' : 'FINAL LESSON'}</span>
-          <h2>{courseComplete ? 'You built an accompaniment practice.' : 'Mark this lesson complete when it feels like yours.'}</h2>
-          <p>{courseComplete ? 'Keep returning, changing keys, and listening more closely. The course ends; the music does not.' : 'Your progress is saved in this browser.'}</p>
+          <span>FINAL LESSON</span>
+          <h2>Keep making the music yours.</h2>
+          <p>Return anytime to change keys, explore patterns, and listen more closely.</p>
         </div>
       )}
     </section>
@@ -597,7 +570,6 @@ function DemoMusic() {
 
 function App() {
   const [currentIndex, setCurrentIndex] = useState(storedLessonIndex)
-  const [completed, setCompleted] = useState(storedProgress)
   const currentLesson = lessons[currentIndex]
   const [selectedPatternId, setSelectedPatternId] = useState(() => currentLesson.defaultPattern)
   const [keyName, setKeyName] = useState(() => currentLesson.defaultKey)
@@ -623,16 +595,6 @@ function App() {
     requestAnimationFrame(() => document.querySelector('#lesson')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
-  const toggleComplete = () => {
-    setCompleted((current) => {
-      const next = new Set(current)
-      if (next.has(currentLesson.id)) next.delete(currentLesson.id)
-      else next.add(currentLesson.id)
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify([...next]))
-      return next
-    })
-  }
-
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
     document.documentElement.dataset.theme = nextTheme
@@ -644,12 +606,12 @@ function App() {
 
   return (
     <div id="top">
-      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} theme={theme} toggleTheme={toggleTheme} completedCount={completed.size} />
+      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} theme={theme} toggleTheme={toggleTheme} />
       <main>
         <div className="course-layout" id="course">
-          <ChapterRail currentLesson={currentLesson} completed={completed} onNavigate={navigate} />
+          <ChapterRail currentLesson={currentLesson} onNavigate={navigate} />
           <div className="lesson-content">
-            <MobileCourseNav lessonIndex={currentIndex} onSelectLesson={(index) => navigate(lessons[index].id)} completed={completed} />
+            <MobileCourseNav lessonIndex={currentIndex} onSelectLesson={(index) => navigate(lessons[index].id)} />
             <LessonHero lesson={currentLesson} />
             <PatternPicker
               availablePatterns={patterns.filter((item) => currentLesson.patternIds.includes(item.id))}
@@ -659,12 +621,11 @@ function App() {
             />
             <PracticeStudio keyName={keyName} setKeyName={setKeyName} tempo={tempo} setTempo={setTempo} pattern={pattern} lesson={currentLesson} />
             <LearningNotes lesson={currentLesson} />
-            <PracticeChallenge key={currentLesson.id} lesson={currentLesson} isComplete={completed.has(currentLesson.id)} onComplete={toggleComplete} />
+            <PracticeChallenge key={currentLesson.id} lesson={currentLesson} />
             <LessonNavigation
               previous={lessons[currentIndex - 1]}
               next={lessons[currentIndex + 1]}
               onNavigate={navigate}
-              courseComplete={completed.size === lessons.length}
             />
           </div>
         </div>

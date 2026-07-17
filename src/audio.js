@@ -2,7 +2,7 @@ import { CacheStorage, SplendidGrandPiano } from 'smplr'
 
 // Recorded pitches nearest to every note used by the four lesson keys.
 // smplr pitch-shifts between these samples for accidentals such as F♯ and B♭.
-const LESSON_SAMPLE_PITCHES = [40, 43, 45, 48, 52, 55, 57, 60, 64, 67, 72, 76, 79]
+const LESSON_SAMPLE_PITCHES = [38, 43, 47, 50, 55, 59, 62, 67, 71, 74, 79, 83, 86]
 
 function cachedStorage() {
   if (!window.isSecureContext || !('caches' in window)) return null
@@ -21,6 +21,7 @@ export class PianoEngine {
     this.readyPromise = null
     this.isReady = false
     this.onLoadProgress = onLoadProgress
+    this.scheduledStops = []
   }
 
   async ready() {
@@ -48,6 +49,8 @@ export class PianoEngine {
   }
 
   stop() {
+    this.scheduledStops.forEach((stopNote) => stopNote())
+    this.scheduledStops = []
     this.piano?.stop()
   }
 
@@ -61,12 +64,13 @@ export class PianoEngine {
       sequence.forEach((noteIndex, noteStep) => {
         const isDownbeat = noteStep === 0
         const velocity = isDownbeat ? 82 : 58 + ((chordIndex + noteStep) % 3) * 3
-        this.piano.start({
+        const stopNote = this.piano.start({
           note: chord.notes[noteIndex],
           time: start + step * stepSeconds,
           duration: Math.max(0.65, stepSeconds * 1.35),
           velocity,
         })
+        this.scheduledStops.push(stopNote)
         step += 1
       })
     })
@@ -81,12 +85,15 @@ export class PianoEngine {
     let totalBeats = 0
 
     events.forEach((event) => {
-      event.notes.forEach((note) => this.piano.start({
-        note,
-        time: start + event.beat * beatSeconds,
-        duration: Math.max(0.12, event.duration * beatSeconds * 0.92),
-        velocity: event.velocity ?? 68,
-      }))
+      event.notes.forEach((note) => {
+        const stopNote = this.piano.start({
+          note,
+          time: start + event.beat * beatSeconds,
+          duration: Math.max(0.12, event.duration * beatSeconds * 0.92),
+          velocity: event.velocity ?? 68,
+        })
+        this.scheduledStops.push(stopNote)
+      })
       totalBeats = Math.max(totalBeats, event.beat + event.duration)
     })
 
@@ -94,11 +101,13 @@ export class PianoEngine {
   }
 
   dispose() {
+    this.stop()
     this.piano?.dispose()
     this.piano = null
     this.context?.close()
     this.context = null
     this.readyPromise = null
     this.isReady = false
+    this.scheduledStops = []
   }
 }

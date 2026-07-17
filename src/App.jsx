@@ -1,641 +1,293 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
-  ArrowLeft,
+  ArrowDown,
   ArrowRight,
-  BookOpen,
   Check,
-  ChevronDown,
+  ChevronRight,
   Headphones,
-  Info,
+  Layers3,
   LoaderCircle,
   Menu,
   Moon,
+  Music2,
   Pause,
   Play,
   RotateCcw,
-  Sparkles,
   Sun,
-  Trophy,
   Volume2,
   X,
 } from 'lucide-react'
 import { PianoEngine } from './audio.js'
-import { course, lessons } from './course.js'
-import { keys, patterns } from './data.js'
-import { demoPieces } from './demoMusic.js'
+import { canon, lessonSteps } from './canonLesson.js'
+import { FULL_CANON_SOURCE, loadFullCanon } from './fullCanon.js'
 
-const CURRENT_LESSON_KEY = 'pianobook-current-lesson'
+const THEME_KEY = 'pianobook-theme'
+const PROGRESS_KEY = 'pianobook-canon-progress'
 
-function storedLessonIndex() {
-  const savedId = localStorage.getItem(CURRENT_LESSON_KEY)
-  const index = lessons.findIndex((lesson) => lesson.id === savedId)
-  return index >= 0 ? index : 0
+function getStoredTheme() {
+  const saved = localStorage.getItem(THEME_KEY)
+  if (saved === 'light' || saved === 'dark') return saved
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 function Logo() {
   return (
     <a className="brand" href="#top" aria-label="Piano Book home">
-      <span className="brand-mark" aria-hidden="true"><span /><span /><span /></span>
-      <span className="brand-copy">
-        <strong>Piano Book</strong>
-        <small>Play beautifully, simply.</small>
-      </span>
+      <span className="brand-symbol" aria-hidden="true"><i /><i /><i /><i /></span>
+      <span><strong>Piano Book</strong><small>Learn music from the inside out</small></span>
     </a>
   )
 }
 
-function Header({ menuOpen, setMenuOpen, theme, toggleTheme }) {
+function Header({ theme, onTheme, menuOpen, setMenuOpen }) {
   return (
     <header className="site-header">
       <Logo />
-      <nav className={`main-nav ${menuOpen ? 'is-open' : ''}`} aria-label="Primary navigation">
-        <a className="active" href="#course" onClick={() => setMenuOpen(false)}>Lessons</a>
-        <a href="#formulas" onClick={() => setMenuOpen(false)}>Formulas</a>
-        <a href="#about" onClick={() => setMenuOpen(false)}>Practice</a>
-        <a href="#demo-music" onClick={() => setMenuOpen(false)}>Demos</a>
+      <nav className={menuOpen ? 'open' : ''} aria-label="Main navigation">
+        <a href="#piece" onClick={() => setMenuOpen(false)}>The piece</a>
+        <a href="#dissection" onClick={() => setMenuOpen(false)}>Dissection</a>
+        <a href="#practice" onClick={() => setMenuOpen(false)}>Practice</a>
       </nav>
-      <div className="header-actions">
-        <button
-          className="theme-button"
-          onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}
-          data-testid="theme-toggle"
-        >
+      <div className="header-buttons">
+        <button onClick={onTheme} aria-label={`Use ${theme === 'dark' ? 'light' : 'dark'} theme`}>
           {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
         </button>
-        <button
-          className="menu-button"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-expanded={menuOpen}
-          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
+        <button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
     </header>
   )
 }
 
-function ChapterRail({ currentLesson, onNavigate }) {
-  return (
-    <aside className="chapter-rail" aria-label="Course chapters">
-      <p className="eyebrow">THE COURSE · {lessons.length} LESSONS</p>
-      <div className="chapter-list">
-        {course.map((chapter) => {
-          const active = chapter.id === currentLesson.chapterId
-
-          return (
-            <div className={`chapter ${active ? 'active' : ''}`} key={chapter.id}>
-              <button className="chapter-heading" onClick={() => onNavigate(chapter.lessons[0].id)} aria-expanded={active}>
-                <div className="chapter-number">
-                  {active ? <span className="pulse-dot" /> : chapter.number}
-                </div>
-                <div>
-                  <strong>{chapter.title}</strong>
-                  <span>{chapter.detail}</span>
-                </div>
-                {active && <span className="chapter-state">NOW</span>}
-              </button>
-              {active && (
-                <div className="rail-lessons">
-                  {chapter.lessons.map((lesson, index) => (
-                    <button
-                      className={lesson.id === currentLesson.id ? 'current' : ''}
-                      onClick={() => onNavigate(lesson.id)}
-                      key={lesson.id}
-                    >
-                      <span>{String(index + 1).padStart(2, '0')}</span>
-                      {lesson.title} {lesson.accent}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-      <div className="rail-note">
-        <Sparkles size={18} />
-        <p><strong>A little each day.</strong><br />Ten focused minutes beats an hour once a week.</p>
-      </div>
-    </aside>
-  )
-}
-
-function MobileCourseNav({ lessonIndex, onSelectLesson }) {
-  return (
-    <div className="mobile-course-nav" aria-label="Choose a lesson">
-      <div>
-        <span>COURSE LESSON</span>
-        <strong>{lessonIndex + 1} of {lessons.length}</strong>
-      </div>
-      <div className="mobile-lesson-select">
-        <select value={lessonIndex} onChange={(event) => onSelectLesson(Number(event.target.value))} aria-label="Current course lesson">
-          {lessons.map((lesson, index) => (
-            <option key={lesson.id} value={index}>
-              {index + 1}. {lesson.title} {lesson.accent}
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={16} />
-      </div>
-    </div>
-  )
-}
-
-function LessonHero({ lesson }) {
-  return (
-    <section className="lesson-hero" id="lesson">
-      <div className="hero-meta">
-        <span>CHAPTER {lesson.chapterNumber}</span><i /><span>LESSON {lesson.lessonNumber}</span>
-        <span className="duration"><BookOpen size={14} /> {lesson.duration} MIN</span>
-      </div>
-      <h1>{lesson.title}<br /><em>{lesson.accent}</em></h1>
-      <p>{lesson.intro}</p>
-      <div className="hero-rule"><span>Today’s idea</span><i /><strong>{lesson.idea}</strong></div>
-    </section>
-  )
-}
-
-function PatternPicker({ availablePatterns, selectedId, onSelect, lesson }) {
-  return (
-    <section className="pattern-picker" id="formulas">
-      <div className="section-heading">
-        <div><span className="step-label">STEP 1</span><h2>{lesson.pickerTitle}</h2></div>
-        <p>{lesson.pickerCopy}</p>
-      </div>
-      <div className={`pattern-grid pattern-count-${availablePatterns.length}`}>
-        {availablePatterns.map((pattern) => (
-          <button
-            className={`pattern-card ${selectedId === pattern.id ? 'selected' : ''}`}
-            key={pattern.id}
-            onClick={() => onSelect(pattern.id)}
-            aria-pressed={selectedId === pattern.id}
-            data-testid={`pattern-${pattern.id}`}
-          >
-            <span className="pattern-index">{pattern.short}</span>
-            <span className="pattern-icon" aria-hidden="true">
-              {pattern.sequence.map((note, index) => <i key={index} style={{ height: `${10 + note * 7}px` }} />)}
-            </span>
-            <strong>{pattern.name}</strong><small>{pattern.subtitle}</small>
-            {selectedId === pattern.id && <span className="selected-check"><Check size={13} /></span>}
-          </button>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function BeatDiagram({ pattern, activeBeat, playing }) {
-  return (
-    <div className="beat-diagram" aria-label={`${pattern.name} note pattern`}>
-      {pattern.sequence.map((note, index) => (
-        <div className={`beat ${playing && activeBeat === index ? 'active' : ''}`} key={index}>
-          <span className="beat-note" style={{ '--note-level': note }}><i /></span>
-          <small>{pattern.beats[index]}</small>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ChordProgression({ chords, activeChord, isPlaying, meter }) {
-  return (
-    <div className="chord-progression">
-      {chords.map((chord, index) => (
-        <div className={`chord-card ${chord.color} ${isPlaying && activeChord === index ? 'active' : ''}`} key={`${chord.name}-${index}`}>
-          <span className="roman">{chord.roman}</span><strong>{chord.name}</strong>
-          <span className="chord-notes">{chord.notes.map((note) => note.replace(/\d/g, '')).join(' · ')}</span>
-          <div className="beat-dots" aria-hidden="true">
-            {Array.from({ length: meter }, (_, dot) => <i key={dot} />)}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function normalizePitch(note) {
-  const pitch = note?.replace(/\d/g, '')
-  return { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' }[pitch] || pitch
-}
-
-function Keyboard({ activeNote, handHint }) {
-  const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'B2']
-  const blackKeys = [
-    { name: 'C#', left: 5.1 }, { name: 'D#', left: 12.3 }, { name: 'F#', left: 26.5 }, { name: 'G#', left: 33.7 }, { name: 'A#', left: 40.8 },
-    { name: 'C#2', left: 55.1 }, { name: 'D#2', left: 62.3 }, { name: 'F#2', left: 76.5 }, { name: 'G#2', left: 83.7 }, { name: 'A#2', left: 90.8 },
-  ]
-  const activePitch = normalizePitch(activeNote)
-
-  return (
-    <div className="keyboard-wrap">
-      <div className="keyboard" aria-label={activeNote ? `Currently playing ${activeNote}` : 'Piano keyboard'}>
-        {whiteKeys.map((key, index) => <span className={`white-key ${activePitch === key.replace(/\d/g, '') ? 'active' : ''}`} key={`${key}-${index}`} />)}
-        {blackKeys.map((key) => (
-          <span
-            className={`black-key ${activePitch === key.name.replace(/\d/g, '') ? 'active' : ''}`}
-            style={{ left: `${key.left}%` }}
-            key={key.name}
-          />
-        ))}
-      </div>
-      <div className="hand-hint"><span>LH</span> {handHint}</div>
-    </div>
-  )
-}
-
-function PracticeStudio({ keyName, setKeyName, tempo, setTempo, pattern, lesson }) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [activeStep, setActiveStep] = useState(-1)
-  const [audioStatus, setAudioStatus] = useState('idle')
-  const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 })
+function useCanonPlayer() {
   const engine = useRef(null)
-  const timers = useRef([])
-  const playbackRequest = useRef(0)
-  const chords = keys[keyName].chords
-  const activeChord = activeStep < 0 ? -1 : Math.floor(activeStep / pattern.sequence.length)
-  const activeBeat = activeStep < 0 ? -1 : activeStep % pattern.sequence.length
-  const activeNote = activeChord >= 0 ? chords[activeChord]?.notes[pattern.sequence[activeBeat]] : null
-
-  const clearPlayback = () => {
-    playbackRequest.current += 1
-    timers.current.forEach((timer) => clearTimeout(timer))
-    timers.current = []
-    engine.current?.stop()
-    setIsPlaying(false)
-    setActiveStep(-1)
-  }
-
-  useEffect(() => () => {
-    timers.current.forEach((timer) => clearTimeout(timer))
-    engine.current?.dispose()
-  }, [])
-
-  useEffect(() => {
-    playbackRequest.current += 1
-    timers.current.forEach((timer) => clearTimeout(timer))
-    timers.current = []
-    engine.current?.stop()
-    setIsPlaying(false)
-    setActiveStep(-1)
-  }, [keyName, tempo, pattern.id, lesson.id])
-
-  const startPlayback = async () => {
-    if (isPlaying) {
-      clearPlayback()
-      return
-    }
-    if (!engine.current) engine.current = new PianoEngine((progress) => setLoadProgress(progress))
-    const request = ++playbackRequest.current
-
-    try {
-      if (!engine.current.isReady) setAudioStatus('loading')
-      await engine.current.ready()
-      setAudioStatus('ready')
-    } catch (error) {
-      console.error('Unable to load the sampled piano', error)
-      engine.current.dispose()
-      engine.current = null
-      setAudioStatus('error')
-      return
-    }
-
-    if (request !== playbackRequest.current) return
-
-    const schedule = engine.current.schedule(chords, pattern.sequence, tempo, pattern.subdivision)
-    setIsPlaying(true)
-    for (let step = 0; step < schedule.totalSteps; step += 1) {
-      timers.current.push(setTimeout(() => setActiveStep(step), schedule.startDelay + step * schedule.stepMs))
-    }
-    timers.current.push(setTimeout(clearPlayback, schedule.startDelay + schedule.totalSteps * schedule.stepMs + 120))
-  }
-
-  return (
-    <section className="studio" aria-label="Interactive practice studio">
-      <div className="studio-topline">
-        <div><span className="step-label light">STEP 2</span><h2>{lesson.studioTitle}</h2></div>
-        <div className="studio-controls">
-          <label>
-            <span>KEY</span>
-            <div className="select-wrap">
-              <select value={keyName} onChange={(event) => setKeyName(event.target.value)} aria-label="Practice key">
-                {Object.entries(keys).map(([value, key]) => <option value={value} key={value}>{key.label}</option>)}
-              </select>
-              <ChevronDown size={14} />
-            </div>
-          </label>
-          <label className="tempo-control">
-            <span>TEMPO <strong>{tempo}</strong> BPM</span>
-            <input type="range" min="52" max="108" value={tempo} onChange={(event) => setTempo(Number(event.target.value))} aria-label="Tempo" />
-          </label>
-        </div>
-      </div>
-
-      <div className="formula-summary">
-        <div className="formula-copy">
-          <span>{pattern.level.toUpperCase()} FORMULA</span>
-          <h3>{pattern.name}</h3>
-          <p>{pattern.description}</p>
-        </div>
-        <BeatDiagram pattern={pattern} activeBeat={activeBeat} playing={isPlaying} />
-      </div>
-
-      <ChordProgression chords={chords} activeChord={activeChord} isPlaying={isPlaying} meter={pattern.meter || 4} />
-      <Keyboard activeNote={activeNote} handHint={lesson.handHint} />
-
-      <div className="transport">
-        <button className="reset-button" onClick={clearPlayback} aria-label="Reset practice"><RotateCcw size={17} /></button>
-        <button className={`play-button ${isPlaying ? 'playing' : ''}`} onClick={startPlayback} data-testid="play-practice" disabled={audioStatus === 'loading'}>
-          <span>
-            {audioStatus === 'loading' ? <LoaderCircle className="loading-icon" size={20} /> : isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
-          </span>
-          {audioStatus === 'loading'
-            ? `Loading grand piano${loadProgress.total ? ` · ${Math.round((loadProgress.loaded / loadProgress.total) * 100)}%` : '…'}`
-            : isPlaying ? 'Stop playback' : audioStatus === 'error' ? 'Retry piano audio' : 'Play the formula'}
-        </button>
-        <div className={`listen-note ${audioStatus}`} role="status" aria-live="polite">
-          <Headphones size={17} />
-          {audioStatus === 'loading' && <span>Preparing <strong>two dynamic layers</strong><br />for a natural piano sound.</span>}
-          {audioStatus === 'ready' && <span>Sampled Steinway grand.<br /><strong>Cached for your next session.</strong></span>}
-          {audioStatus === 'error' && <span>Samples couldn’t load.<br /><strong>Check your connection and retry.</strong></span>}
-          {audioStatus === 'idle' && <span>Listen for the <strong>shape</strong>,<br />not each separate note.</span>}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function LearningNotes({ lesson }) {
-  return (
-    <section className="learning-notes" id="about">
-      <article>
-        <span className="note-icon"><Volume2 size={20} /></span>
-        <div><span className="note-kicker">LISTEN FOR</span><h3>{lesson.listen.title}</h3><p>{lesson.listen.body}</p></div>
-      </article>
-      <article>
-        <span className="note-icon"><Info size={20} /></span>
-        <div><span className="note-kicker">PLAYING TIP</span><h3>{lesson.tip.title}</h3><p>{lesson.tip.body}</p></div>
-      </article>
-    </section>
-  )
-}
-
-function PracticeChallenge({ lesson }) {
-  const [checked, setChecked] = useState([])
-
-  const toggle = (index) => {
-    setChecked((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])
-  }
-
-  return (
-    <section className="practice-challenge" aria-labelledby="challenge-title">
-      <div className="challenge-heading">
-        <span className="challenge-icon"><Trophy size={20} /></span>
-        <div><span className="step-label">STEP 3</span><h2 id="challenge-title">Make it yours</h2></div>
-        <p>Finish these three small passes. Musical confidence grows through clear, repeatable wins.</p>
-      </div>
-      <div className="challenge-list">
-        {lesson.challenge.map((item, index) => (
-          <button className={checked.includes(index) ? 'checked' : ''} onClick={() => toggle(index)} key={item}>
-            <span>{checked.includes(index) ? <Check size={15} /> : index + 1}</span>{item}
-          </button>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function LessonNavigation({ previous, next, onNavigate }) {
-  return (
-    <section className="lesson-navigation" aria-label="Lesson navigation">
-      {previous ? (
-        <button className="previous-lesson" onClick={() => onNavigate(previous.id)}>
-          <ArrowLeft size={16} /><span><small>PREVIOUS</small>{previous.title} {previous.accent}</span>
-        </button>
-      ) : <span />}
-      {next ? (
-        <div className="next-copy">
-          <span>UP NEXT · LESSON {next.courseNumber}</span>
-          <h2>{next.title} {next.accent}</h2>
-          <button onClick={() => onNavigate(next.id)}>NEXT LESSON <ArrowRight size={17} /></button>
-        </div>
-      ) : (
-        <div className="next-copy final-copy">
-          <span>FINAL LESSON</span>
-          <h2>Keep making the music yours.</h2>
-          <p>Return anytime to change keys, explore patterns, and listen more closely.</p>
-        </div>
-      )}
-    </section>
-  )
-}
-
-function pitchPosition(pitch) {
-  const match = pitch.match(/^([A-G])([#b]?)(\d)$/)
-  if (!match) return { y: 60, accidental: '' }
-  const [, letter, accidental, octave] = match
-  const scaleIndex = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }[letter]
-  const stepsFromE4 = (Number(octave) - 4) * 7 + scaleIndex - 2
-  return { y: 78 - stepsFromE4 * 5, accidental: accidental === 'b' ? '♭' : accidental === '#' ? '♯' : '' }
-}
-
-function MusicStaff({ piece, activeNote }) {
-  const left = 72
-  const width = 824
-  const xForBeat = (beat) => left + (beat / piece.totalBeats) * width
-
-  return (
-    <svg className="music-staff" viewBox="0 0 930 132" role="img" aria-label={`${piece.title} melody excerpt in ${piece.key}`}>
-      <g className="staff-lines">
-        {[38, 48, 58, 68, 78].map((y) => <line x1="46" x2="906" y1={y} y2={y} key={y} />)}
-      </g>
-      <text className="clef" x="47" y="77">𝄞</text>
-      <text className="time-signature" x="66" y="52">{piece.meterLabel.split('/')[0]}</text>
-      <text className="time-signature" x="66" y="70">{piece.meterLabel.split('/')[1]}</text>
-      {Array.from({ length: piece.totalBeats / piece.meter + 1 }, (_, index) => (
-        <line className="bar-line" x1={xForBeat(index * piece.meter)} x2={xForBeat(index * piece.meter)} y1="38" y2="78" key={index} />
-      ))}
-      {piece.melody.map((event, index) => {
-        const { y, accidental } = pitchPosition(event.notes[0])
-        const x = xForBeat(event.beat + Math.min(event.duration, 0.5) * 0.35)
-        const open = event.duration >= 1.5
-        const stemUp = y > 53
-        return (
-          <g className={`score-note ${activeNote === index ? 'active' : ''}`} key={`${event.beat}-${event.notes[0]}-${index}`}>
-            {accidental && <text className="accidental" x={x - 13} y={y + 4}>{accidental}</text>}
-            {(y >= 83 || y <= 33) && <line className="ledger-line" x1={x - 8} x2={x + 8} y1={y} y2={y} />}
-            <ellipse className={open ? 'open' : ''} cx={x} cy={y} rx="5.5" ry="4" transform={`rotate(-18 ${x} ${y})`} />
-            <line className="note-stem" x1={stemUp ? x + 5 : x - 5} x2={stemUp ? x + 5 : x - 5} y1={y} y2={stemUp ? y - 25 : y + 25} />
-            {event.duration < 0.75 && <path className="note-flag" d={stemUp ? `M ${x + 5} ${y - 25} q 12 7 5 16` : `M ${x - 5} ${y + 25} q -12 -7 -5 -16`} />}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-function DemoMusic() {
+  const timer = useRef(null)
+  const request = useRef(0)
+  const playingIdRef = useRef(null)
   const [playingId, setPlayingId] = useState(null)
-  const [activeNotes, setActiveNotes] = useState({})
-  const [audioStatus, setAudioStatus] = useState('idle')
-  const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 })
-  const engine = useRef(null)
-  const timers = useRef([])
-  const playbackRequest = useRef(0)
+  const [status, setStatus] = useState('idle')
+  const [activeBeat, setActiveBeat] = useState(-1)
 
-  const stopPlayback = () => {
-    playbackRequest.current += 1
-    timers.current.forEach((timer) => clearTimeout(timer))
-    timers.current = []
+  const stop = () => {
+    request.current += 1
+    clearInterval(timer.current)
     engine.current?.stop()
+    playingIdRef.current = null
     setPlayingId(null)
-    setActiveNotes({})
+    setActiveBeat(-1)
   }
 
   useEffect(() => () => {
-    timers.current.forEach((timer) => clearTimeout(timer))
+    clearInterval(timer.current)
     engine.current?.dispose()
   }, [])
 
-  const play = async (piece) => {
-    if (playingId === piece.id) {
-      stopPlayback()
+  const play = async (id, events = canon.layers.full) => {
+    if (playingIdRef.current === id) {
+      stop()
       return
     }
-    stopPlayback()
-    if (!engine.current) engine.current = new PianoEngine((progress) => setLoadProgress(progress))
-    const request = ++playbackRequest.current
 
+    stop()
+    const playRequest = ++request.current
+    if (!engine.current) engine.current = new PianoEngine()
     try {
-      if (!engine.current.isReady) setAudioStatus('loading')
-      await engine.current.ready()
-      setAudioStatus('ready')
+      if (!engine.current.isReady) setStatus('loading')
+      const eventsPromise = typeof events === 'function' ? events() : Promise.resolve(events)
+      const [, resolvedEvents] = await Promise.all([engine.current.ready(), eventsPromise])
+      setStatus('ready')
+      events = resolvedEvents
     } catch (error) {
-      console.error('Unable to load demo piano audio', error)
+      console.error('Unable to load piano audio', error)
       engine.current?.dispose()
       engine.current = null
-      setAudioStatus('error')
+      setStatus('error')
       return
     }
+    if (playRequest !== request.current) return
 
-    if (request !== playbackRequest.current) return
-    const schedule = engine.current.scheduleEvents(piece.events, piece.tempo)
-    setPlayingId(piece.id)
-    piece.melody.forEach((event, index) => {
-      timers.current.push(setTimeout(() => setActiveNotes({ [piece.id]: index }), schedule.startDelay + event.beat * schedule.beatMs))
-    })
-    timers.current.push(setTimeout(stopPlayback, schedule.startDelay + schedule.totalBeats * schedule.beatMs + 180))
+    const schedule = engine.current.scheduleEvents(events, canon.tempo)
+    const startedAt = performance.now() + schedule.startDelay
+    playingIdRef.current = id
+    setPlayingId(id)
+    setActiveBeat(0)
+    timer.current = setInterval(() => {
+      const beat = Math.max(0, (performance.now() - startedAt) / schedule.beatMs)
+      if (beat >= schedule.totalBeats) {
+        stop()
+      } else {
+        setActiveBeat(Math.floor(beat * 2) / 2)
+      }
+    }, 60)
   }
 
+  return { play, stop, playingId, status, activeBeat }
+}
+
+function PlayButton({ id, player, events, label = 'Listen' }) {
+  const playing = player.playingId === id
   return (
-    <section className="demo-music" id="demo-music" aria-labelledby="demo-music-title">
-      <div className="demo-heading">
-        <div><span className="eyebrow">LISTENING ROOM</span><h2 id="demo-music-title">Three scores, brought to life.</h2></div>
-        <p>Follow the highlighted melody while a learner-friendly piano arrangement plays. Each excerpt preserves the source key, meter, and theme.</p>
+    <button className="play-control" onClick={() => player.play(id, events)} disabled={player.status === 'loading'}>
+      <span>{player.status === 'loading' ? <LoaderCircle className="spinner" size={18} /> : playing ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</span>
+      {player.status === 'loading' ? 'Preparing piano…' : playing ? 'Pause' : label}
+    </button>
+  )
+}
+
+function Hero({ player }) {
+  return (
+    <section className="hero" id="piece">
+      <div className="hero-copy">
+        <p className="eyebrow">CHAPTER 01 · ONE PIECE, FIVE LAYERS</p>
+        <h1>Don’t start with theory.<br /><em>Start with music.</em></h1>
+        <p className="hero-intro">First, listen to a piece worth knowing. Then we’ll take it apart, all the way down to its eight-note foundation—and rebuild it with your own hands.</p>
+        <div className="hero-actions">
+          <PlayButton id="hero-full" player={player} events={loadFullCanon} label="Hear the full piece" />
+          <a href="#dissection">Take it apart <ArrowDown size={15} /></a>
+        </div>
       </div>
-      <div className="demo-list">
-        {demoPieces.map((piece, index) => {
-          const playing = playingId === piece.id
-          return (
-            <article className={`demo-piece ${playing ? 'is-playing' : ''}`} key={piece.id}>
-              <div className="demo-number">0{index + 1}</div>
-              <div className="demo-copy">
-                <span>{piece.key.toUpperCase()} · {piece.meterLabel} · {piece.tempo} BPM</span>
-                <h3>{piece.title}{piece.subtitle && <small>{piece.subtitle}</small>}</h3>
-                <p>{piece.composer}</p>
-                <em>{piece.character}</em>
-              </div>
-              <div className="score-wrap"><MusicStaff piece={piece} activeNote={activeNotes[piece.id]} /></div>
-              <div className="demo-actions">
-                <button data-testid={`play-demo-${piece.id}`} onClick={() => play(piece)} disabled={audioStatus === 'loading'} aria-label={`${playing ? 'Stop' : 'Play'} ${piece.title}`}>
-                  <span>{audioStatus === 'loading' ? <LoaderCircle className="loading-icon" size={18} /> : playing ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}</span>
-                  {audioStatus === 'loading' ? `${loadProgress.total ? Math.round((loadProgress.loaded / loadProgress.total) * 100) : 0}%` : playing ? 'Stop' : 'Listen'}
-                </button>
-                <a href={piece.sourceUrl} target="_blank" rel="noreferrer">Public-domain score ↗</a>
-              </div>
-            </article>
-          )
-        })}
+      <div className="piece-card" aria-label="Featured piece">
+        <div className="piece-number">No. 01</div>
+        <div className="piece-orbit"><Music2 size={46} strokeWidth={1.2} /></div>
+        <p>JOHANN PACHELBEL · c. 1680</p>
+        <h2>Canon<br /><i>in D</i></h2>
+        <div className="piece-meta"><span>D MAJOR</span><span>4 / 4</span><span>{canon.tempo} BPM</span><span>≈ 4 MIN</span></div>
       </div>
-      <p className={`demo-status ${audioStatus}`} role="status" aria-live="polite">
-        {audioStatus === 'loading' && 'Preparing the sampled grand piano…'}
-        {audioStatus === 'ready' && 'Sampled grand piano ready. Select any score to listen.'}
-        {audioStatus === 'error' && 'The piano samples could not load. Check your connection and try again.'}
-      </p>
+    </section>
+  )
+}
+
+function Progression({ activeBeat, playing }) {
+  return (
+    <div className="progression" aria-label="Canon in D chord progression">
+      {canon.chords.map((chord, index) => {
+        const active = playing && Math.floor(activeBeat) % canon.chords.length === index
+        return (
+          <div className={active ? 'active' : ''} key={chord.name}>
+            <span>{chord.roman}</span><strong>{chord.name}</strong><small>{chord.notes.join(' · ')}</small>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function NotePath({ activeBeat, playing }) {
+  const notes = canon.melodyNotes
+  return (
+    <div className="note-path" aria-label="Melody contour">
+      <svg viewBox="0 0 800 170" role="img">
+        <title>The melody falls, then gently rises</title>
+        <path className="guide-path" d={notes.map((note, index) => `${index ? 'L' : 'M'} ${28 + index * 49.5} ${145 - note.level * 18}`).join(' ')} />
+        {notes.map((note, index) => (
+          <g className={playing && Math.floor(activeBeat) === index ? 'active' : ''} key={`${note.pitch}-${index}`}>
+            <circle cx={28 + index * 49.5} cy={145 - note.level * 18} r="7" />
+            <text x={28 + index * 49.5} y="164" textAnchor="middle">{note.label}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  )
+}
+
+function LayerVisual({ type, player, id }) {
+  const playing = player.playingId === id
+  if (type === 'bass' || type === 'harmony') return <Progression activeBeat={player.activeBeat} playing={playing} />
+  if (type === 'rhythm') {
+    return (
+      <div className="pulse-grid">
+        {Array.from({ length: 16 }, (_, index) => <i className={playing && Math.floor(player.activeBeat * 2) === index ? 'active' : ''} key={index}><span>{index % 2 === 0 ? (index / 2) % 4 + 1 : '&'}</span></i>)}
+      </div>
+    )
+  }
+  if (type === 'melody') return <NotePath activeBeat={player.activeBeat} playing={playing} />
+  return <Progression activeBeat={player.activeBeat} playing={playing} />
+}
+
+function LessonStep({ step, index, player, complete, onComplete }) {
+  const id = `step-${step.id}`
+  const playbackEvents = step.layer === 'complete' ? loadFullCanon : canon.layers[step.layer]
+  return (
+    <article className={`lesson-step ${complete ? 'complete' : ''}`} id={step.id}>
+      <div className="step-index"><span>{String(index + 1).padStart(2, '0')}</span><i /></div>
+      <div className="step-copy">
+        <p className="eyebrow">{step.kicker}</p>
+        <h3>{step.title}</h3>
+        <p>{step.body}</p>
+        <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {step.listenFor}</span></div>
+      </div>
+      <div className="step-workbench">
+        <div className="workbench-head"><span>{step.label}</span><small>{step.caption}</small></div>
+        <LayerVisual type={step.id} player={player} id={id} />
+        <div className="workbench-actions">
+          <PlayButton id={id} player={player} events={playbackEvents} label={`Play ${step.shortLabel}`} />
+          <button className="mark-button" onClick={() => onComplete(step.id)}>
+            {complete ? <Check size={16} /> : <span />}{complete ? 'Understood' : 'Mark understood'}
+          </button>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function FinalPractice({ player, completed }) {
+  return (
+    <section className="final-practice" id="practice">
+      <div>
+        <p className="eyebrow">PUT THE ROOM BACK TOGETHER</p>
+        <h2>Now hear the whole.</h2>
+        <p>You know what every floor is doing. Listen once more: anchor in the bass, motion in the inner notes, direction in the melody.</p>
+      </div>
+      <div className="practice-player">
+        <Layers3 size={28} />
+        <div><span>{completed} OF {lessonSteps.length} LAYERS EXPLORED</span><strong>Canon in D · complete score</strong></div>
+        <PlayButton id="final-full" player={player} events={loadFullCanon} label="Play full Canon" />
+        <a className="score-credit" href={FULL_CANON_SOURCE} target="_blank" rel="noreferrer">3 violins and basso · Mutopia CC BY 4.0</a>
+      </div>
     </section>
   )
 }
 
 function App() {
-  const [currentIndex, setCurrentIndex] = useState(storedLessonIndex)
-  const currentLesson = lessons[currentIndex]
-  const [selectedPatternId, setSelectedPatternId] = useState(() => currentLesson.defaultPattern)
-  const [keyName, setKeyName] = useState(() => currentLesson.defaultKey)
-  const [tempo, setTempo] = useState(() => currentLesson.tempo)
+  const [theme, setTheme] = useState(getStoredTheme)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light')
-  const pattern = useMemo(() => patterns.find((item) => item.id === selectedPatternId) || patterns[0], [selectedPatternId])
+  const [completed, setCompleted] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || [] } catch { return [] }
+  })
+  const player = useCanonPlayer()
 
   useEffect(() => {
-    document.title = `${currentLesson.title} ${currentLesson.accent} · Piano Book`
-  }, [currentLesson])
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem(THEME_KEY, theme)
+  }, [theme])
 
-  const navigate = (lessonId) => {
-    const index = lessons.findIndex((lesson) => lesson.id === lessonId)
-    if (index < 0) return
-    const nextLesson = lessons[index]
-    setCurrentIndex(index)
-    setSelectedPatternId(nextLesson.defaultPattern)
-    setKeyName(nextLesson.defaultKey)
-    setTempo(nextLesson.tempo)
-    setMenuOpen(false)
-    localStorage.setItem(CURRENT_LESSON_KEY, nextLesson.id)
-    requestAnimationFrame(() => document.querySelector('#lesson')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark'
-    document.documentElement.dataset.theme = nextTheme
-    document.documentElement.style.colorScheme = nextTheme
-    document.querySelector('#theme-color')?.setAttribute('content', nextTheme === 'dark' ? '#171a18' : '#f4f1e9')
-    localStorage.setItem('pianobook-theme', nextTheme)
-    setTheme(nextTheme)
+  const toggleComplete = (id) => {
+    setCompleted((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(next))
+      return next
+    })
   }
 
   return (
     <div id="top">
-      <Header menuOpen={menuOpen} setMenuOpen={setMenuOpen} theme={theme} toggleTheme={toggleTheme} />
+      <Header theme={theme} onTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
       <main>
-        <div className="course-layout" id="course">
-          <ChapterRail currentLesson={currentLesson} onNavigate={navigate} />
-          <div className="lesson-content">
-            <MobileCourseNav lessonIndex={currentIndex} onSelectLesson={(index) => navigate(lessons[index].id)} />
-            <LessonHero lesson={currentLesson} />
-            <PatternPicker
-              availablePatterns={patterns.filter((item) => currentLesson.patternIds.includes(item.id))}
-              selectedId={selectedPatternId}
-              onSelect={setSelectedPatternId}
-              lesson={currentLesson}
-            />
-            <PracticeStudio keyName={keyName} setKeyName={setKeyName} tempo={tempo} setTempo={setTempo} pattern={pattern} lesson={currentLesson} />
-            <LearningNotes lesson={currentLesson} />
-            <PracticeChallenge key={currentLesson.id} lesson={currentLesson} />
-            <LessonNavigation
-              previous={lessons[currentIndex - 1]}
-              next={lessons[currentIndex + 1]}
-              onNavigate={navigate}
-            />
+        <Hero player={player} />
+        <section className="method" id="dissection">
+          <div><p className="eyebrow">THE PIANO BOOK METHOD</p><h2>Build from the floor up.</h2></div>
+          <p>A piece can feel like a wall of sound. We’ll make it transparent—one musical job at a time.</p>
+          <div className="method-line">
+            {lessonSteps.map((step, index) => <a href={`#${step.id}`} key={step.id}><span>{index + 1}</span>{step.nav}<ChevronRight size={13} /></a>)}
           </div>
-        </div>
-        <DemoMusic />
+        </section>
+        <section className="lesson-stack">
+          {lessonSteps.map((step, index) => <LessonStep step={step} index={index} player={player} complete={completed.includes(step.id)} onComplete={toggleComplete} key={step.id} />)}
+        </section>
+        <FinalPractice player={player} completed={completed.length} />
       </main>
-      <footer>
-        <Logo />
-        <p>Music theory you can hear in your hands.</p>
-        <span>© 2026 Piano Book</span>
-      </footer>
+      <footer><Logo /><p>One beautiful piece at a time.</p><a href="#top">Back to top <ArrowRight size={13} /></a></footer>
     </div>
   )
 }

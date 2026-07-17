@@ -1,27 +1,25 @@
 # Piano Book
 
-Piano Book is an interactive, frontend-only guide to practical popular-piano accompaniment.
+Piano Book is an interactive, frontend-only library for learning piano pieces from the inside out.
 
-It is designed for pianists who already understand the basics of music theory—including reading staff notation, chords, rhythm, meter, keys, cadences, and chord progressions—and want to turn that knowledge into confident, musical playing.
+Choose a tune from the searchable catalog, listen to it, and study its musical jobs from the foundation upward.
 
 ## What is included
 
-The first course is a complete, four-chapter path for turning chord knowledge into musical left-hand accompaniment:
+The current application includes:
 
-- 12 concise lessons covering harmony, color, rhythm, touch, arranging, intros, and endings
-- 6 reusable accompaniment formulas, including broken chords, rolling eighths, and a three-beat waltz
-- Interactive playback in C, D, F, and G major with adjustable tempo
-- Lesson-specific listening cues, playing advice, and three-part practice challenges
-- Persistent course progress and last-lesson restoration using browser storage
-- Responsive course navigation and light/dark themes
+- A compact, searchable catalog designed to scale to many pieces
+- A complete Ode to Joy dissection covering bass, harmony, melody, and the full texture
+- Sampled-piano playback with synchronized, paginated sheet music
+- Responsive layouts and persistent light/dark themes
 
-The focus is practical popular-piano accompaniment, not advanced classical repertoire. Learners should already be comfortable reading chord symbols and keeping a basic pulse.
+Catalog entries without a finished lesson are intentionally listed without playback or lesson links.
 
 ## Technology
 
 - React
 - Vite
-- Tailwind CSS
+- Plain CSS
 - GitHub Pages
 
 ## Audio

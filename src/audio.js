@@ -1,7 +1,6 @@
 import { CacheStorage, SplendidGrandPiano } from 'smplr'
 
-// Recorded pitches nearest to every note used by the four lesson keys.
-// smplr pitch-shifts between these samples for accidentals such as F♯ and B♭.
+// A focused sample set; smplr pitch-shifts between these recorded pitches.
 const LESSON_SAMPLE_PITCHES = [38, 43, 47, 50, 55, 59, 62, 67, 71, 74, 79, 83, 86]
 
 function cachedStorage() {
@@ -15,12 +14,11 @@ function cachedStorage() {
 }
 
 export class PianoEngine {
-  constructor(onLoadProgress) {
+  constructor() {
     this.context = null
     this.piano = null
     this.readyPromise = null
     this.isReady = false
-    this.onLoadProgress = onLoadProgress
     this.scheduledStops = []
   }
 
@@ -38,7 +36,6 @@ export class PianoEngine {
           notes: LESSON_SAMPLE_PITCHES,
           velocityRange: [41, 84],
         },
-        onLoadProgress: this.onLoadProgress,
         ...(storage ? { storage } : {}),
       })
       this.readyPromise = this.piano.ready
@@ -54,34 +51,11 @@ export class PianoEngine {
     this.piano?.stop()
   }
 
-  schedule(chords, sequence, tempo, subdivision = sequence.length === 8 ? 0.5 : 1) {
-    this.stop()
-    const stepSeconds = (60 / tempo) * subdivision
-    const start = this.context.currentTime + 0.12
-    let step = 0
-
-    chords.forEach((chord, chordIndex) => {
-      sequence.forEach((noteIndex, noteStep) => {
-        const isDownbeat = noteStep === 0
-        const velocity = isDownbeat ? 82 : 58 + ((chordIndex + noteStep) % 3) * 3
-        const stopNote = this.piano.start({
-          note: chord.notes[noteIndex],
-          time: start + step * stepSeconds,
-          duration: Math.max(0.65, stepSeconds * 1.35),
-          velocity,
-        })
-        this.scheduledStops.push(stopNote)
-        step += 1
-      })
-    })
-
-    return { startDelay: 120, stepMs: stepSeconds * 1000, totalSteps: step }
-  }
-
   scheduleEvents(events, tempo) {
     this.stop()
     const beatSeconds = 60 / tempo
-    const start = this.context.currentTime + 0.12
+    const leadSeconds = events.length > 500 ? 1 : 0.12
+    const start = this.context.currentTime + leadSeconds
     let totalBeats = 0
 
     events.forEach((event) => {
@@ -97,7 +71,15 @@ export class PianoEngine {
       totalBeats = Math.max(totalBeats, event.beat + event.duration)
     })
 
-    return { startDelay: 120, beatMs: beatSeconds * 1000, totalBeats }
+    return {
+      startTime: start,
+      beatMs: beatSeconds * 1000,
+      totalBeats,
+    }
+  }
+
+  get currentTime() {
+    return this.context?.currentTime ?? 0
   }
 
   dispose() {

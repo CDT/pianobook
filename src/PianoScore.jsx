@@ -145,7 +145,8 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
           const direction = voiceEvents.length > 1 ? (voiceIndex === 0 ? Stem.UP : Stem.DOWN) : undefined
           const entries = createNotes(eventsForMeasure(events, measure), clef, direction, StaveNote, Dot)
           const voice = new Voice('4/4').addTickables(entries.map((entry) => entry.note))
-          const beams = Beam.generateBeams(entries.map((entry) => entry.note))
+          const beamOptions = direction === undefined ? undefined : { stemDirection: direction }
+          const beams = Beam.generateBeams(entries.map((entry) => entry.note), beamOptions)
           return { beams, entries, voice }
         })
         const voices = measureVoices.map((item) => item.voice)

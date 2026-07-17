@@ -16,6 +16,7 @@ function notationBeats(event) {
   if (event.duration <= 0.6) return 0.5
   if (event.duration <= 0.85) return 0.75
   if (event.duration <= 1.25) return 1
+  if (event.duration <= 1.75) return 1.5
   if (event.duration <= 2.5) return 2
   return 4
 }
@@ -25,6 +26,7 @@ function durationCode(duration) {
   if (duration === 0.5) return { code: '8', dotted: false }
   if (duration === 0.75) return { code: '8', dotted: true }
   if (duration === 1) return { code: 'q', dotted: false }
+  if (duration === 1.5) return { code: 'q', dotted: true }
   if (duration === 2) return { code: 'h', dotted: false }
   return { code: 'w', dotted: false }
 }
@@ -69,6 +71,7 @@ function createNotes(events, clef, stemDirection, StaveNote, Dot) {
       clef,
       keys: event.isRest ? [clef === 'treble' ? 'b/4' : 'd/3'] : event.notes.map(vexKey),
       duration: `${duration.code}${event.isRest ? 'r' : ''}`,
+      dots: duration.dotted ? 1 : 0,
       autoStem: stemDirection === undefined,
       ...(stemDirection === undefined ? {} : { stemDirection }),
     })

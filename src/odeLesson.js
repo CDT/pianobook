@@ -13,13 +13,22 @@ const melodyPitches = [
 ]
 
 const melodyBeats = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13.5, 14,
+  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29.5, 30,
 ]
+
+const melodyDurations = {
+  12: 1.5,
+  13.5: 0.5,
+  14: 2,
+  28: 1.5,
+  29.5: 0.5,
+  30: 2,
+}
 
 const melody = melodyPitches.map((pitch, index) => {
   const beat = melodyBeats[index]
-  const duration = beat === 14 || beat === 30 ? 2 : 1
+  const duration = melodyDurations[beat] ?? 1
   return event(beat, pitch, duration, beat % 4 === 0 ? 80 : 72)
 })
 

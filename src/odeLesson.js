@@ -57,7 +57,7 @@ export const odeToJoy = {
     bass: { totalBeats: 32, trebleVoices: [], bassVoices: [bass] },
     harmony: { totalBeats: 32, trebleVoices: [chords], bassVoices: [bass] },
     melody: { totalBeats: 32, trebleVoices: [melody], bassVoices: [] },
-    whole: { totalBeats: 32, trebleVoices: [melody, accompaniment], bassVoices: [bass] },
+    whole: { totalBeats: 32, trebleVoices: [melody], bassVoices: [accompaniment, bass] },
   },
   steps: [
     {

@@ -115,6 +115,7 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
       renderer.resize(width, 245)
       const context = renderer.getContext()
       const positions = []
+      const trackingClef = score.trebleVoices.length ? 'treble' : 'bass'
 
       for (let measure = 0; measure < measureCount; measure += 1) {
       const x = SCORE_MARGIN + measure * MEASURE_WIDTH
@@ -154,12 +155,18 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
           beams.forEach((beam) => beam.setContext(context).draw())
         })
 
-        const trackingVoice = measureVoices[0]
-        trackingVoice.entries.forEach(({ beat, note }) => positions.push({ beat, x: note.getAbsoluteX() }))
+        if (clef === trackingClef) {
+          const trackingVoice = measureVoices[0]
+          trackingVoice.entries.forEach(({ beat, note }) => positions.push({ beat, x: note.getAbsoluteX() }))
+        }
         }
 
         drawStaffVoices(score.trebleVoices, trebleStave, 'treble')
         drawStaffVoices(score.bassVoices, bassStave, 'bass')
+        if (measure === measureCount - 1) {
+          const trackingStave = trackingClef === 'treble' ? trebleStave : bassStave
+          positions.push({ beat: score.totalBeats, x: trackingStave.getNoteEndX() })
+        }
       }
 
       setBeatPositions(positions.sort((a, b) => a.beat - b.beat))
@@ -169,7 +176,7 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
     return () => { cancelled = true }
   }, [measureCount, score, width])
 
-  const normalizedBeat = activeBeat % score.totalBeats
+  const normalizedBeat = activeBeat === score.totalBeats ? activeBeat : activeBeat % score.totalBeats
   const playheadX = useMemo(() => interpolatePlayhead(beatPositions, normalizedBeat), [beatPositions, normalizedBeat])
 
   return (
@@ -188,9 +195,12 @@ const PAGE_BEATS = 16
 export function PaginatedPianoScore({ score, activeBeat, playing, title }) {
   const pageCount = Math.ceil(score.totalBeats / PAGE_BEATS)
   const [page, setPage] = useState(0)
+  const wasPlaying = useRef(false)
 
   useEffect(() => {
     if (playing) setPage(Math.min(pageCount - 1, Math.floor(activeBeat / PAGE_BEATS)))
+    else if (wasPlaying.current) setPage(0)
+    wasPlaying.current = playing
   }, [activeBeat, pageCount, playing])
 
   const pageStart = page * PAGE_BEATS

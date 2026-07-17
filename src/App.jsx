@@ -17,6 +17,13 @@ import { odeToJoy } from './odeLesson.js'
 import { libraryPieces } from './library.js'
 
 const THEME_KEY = 'pianobook-theme'
+const THEME_COLORS = { light: '#f4f1e9', dark: '#171a18' }
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme
+  document.documentElement.style.colorScheme = theme
+  document.querySelector('#theme-color')?.setAttribute('content', THEME_COLORS[theme])
+}
 
 function getStoredTheme() {
   const saved = localStorage.getItem(THEME_KEY)
@@ -61,13 +68,14 @@ function usePianoPlayer() {
   const request = useRef(0)
   const playingIdRef = useRef(null)
   const [playingId, setPlayingId] = useState(null)
-  const [status, setStatus] = useState('idle')
+  const [loadingId, setLoadingId] = useState(null)
+  const [error, setError] = useState(null)
   const [activeBeat, setActiveBeat] = useState(-1)
 
-  const stop = () => {
+  const stop = (stopAudio = true) => {
     request.current += 1
     clearInterval(timer.current)
-    engine.current?.stop()
+    if (stopAudio) engine.current?.stop()
     playingIdRef.current = null
     setPlayingId(null)
     setActiveBeat(-1)
@@ -85,21 +93,25 @@ function usePianoPlayer() {
     }
     stop()
     const playRequest = ++request.current
+    setError(null)
     if (!engine.current) engine.current = new PianoEngine()
     try {
-      if (!engine.current.isReady) setStatus('loading')
+      if (!engine.current.isReady) setLoadingId(id)
       const eventsPromise = typeof events === 'function' ? events() : Promise.resolve(events)
       const [, resolvedEvents] = await Promise.all([engine.current.ready(), eventsPromise])
-      setStatus('ready')
       events = resolvedEvents
     } catch (error) {
       console.error('Unable to load piano audio', error)
       engine.current?.dispose()
       engine.current = null
-      setStatus('error')
+      if (playRequest === request.current) {
+        setLoadingId(null)
+        setError({ id, message: 'Piano audio couldn’t load. Check your connection and try again.' })
+      }
       return
     }
     if (playRequest !== request.current) return
+    setLoadingId(null)
 
     const schedule = engine.current.scheduleEvents(events, tempo)
     playingIdRef.current = id
@@ -108,34 +120,41 @@ function usePianoPlayer() {
     timer.current = setInterval(() => {
       const elapsedSeconds = engine.current.currentTime - schedule.startTime
       const beat = Math.max(0, elapsedSeconds / (schedule.beatMs / 1000))
-      if (beat >= schedule.totalBeats) stop()
-      else setActiveBeat(Math.floor(beat * 2) / 2)
+      if (beat >= schedule.totalBeats) {
+        clearInterval(timer.current)
+        setActiveBeat(schedule.totalBeats)
+        timer.current = setTimeout(() => stop(false), schedule.tailSeconds * 1000)
+      } else setActiveBeat(Math.floor(beat * 2) / 2)
     }, 60)
   }
 
-  return { play, playingId, status, activeBeat }
+  return { play, playingId, loadingId, error, activeBeat }
 }
 
 function PlayButton({ id, player, events, tempo, label = 'Listen' }) {
   const playing = player.playingId === id
+  const loading = player.loadingId === id
   return (
-    <button className="play-control" onClick={() => player.play(id, events, tempo)} disabled={player.status === 'loading'}>
-      <span>{player.status === 'loading' ? <LoaderCircle className="spinner" size={18} /> : playing ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</span>
-      {player.status === 'loading' ? 'Preparing piano…' : playing ? 'Pause' : label}
+    <button className="play-control" onClick={() => player.play(id, events, tempo)} disabled={loading}>
+      <span>{loading ? <LoaderCircle className="spinner" size={18} /> : playing ? <Pause size={17} fill="currentColor" /> : <Play size={17} fill="currentColor" />}</span>
+      {loading ? 'Preparing piano…' : playing ? 'Pause' : player.error?.id === id ? 'Try audio again' : label}
     </button>
   )
 }
 
 function CompactPlayButton({ id, player, events, tempo, title }) {
   const playing = player.playingId === id
+  const loading = player.loadingId === id
+  const failed = player.error?.id === id
   return (
     <button
       className="compact-play"
       onClick={() => player.play(id, events, tempo)}
-      disabled={player.status === 'loading'}
-      aria-label={playing ? `Pause ${title}` : `Play ${title}`}
+      disabled={loading}
+      aria-label={loading ? `Preparing ${title}` : playing ? `Pause ${title}` : failed ? `Retry audio for ${title}` : `Play ${title}`}
+      title={failed ? 'Audio unavailable — try again' : undefined}
     >
-      {player.status === 'loading'
+      {loading
         ? <LoaderCircle className="spinner" size={16} />
         : playing
           ? <Pause size={15} fill="currentColor" />
@@ -194,7 +213,16 @@ function OdeStep({ step, index, player }) {
         <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {step.listenFor}</span></div>
         <PlayButton id={step.id} player={player} events={odeToJoy.layers[step.layer]} tempo={odeToJoy.tempo} label={`Play ${step.label.toLowerCase()}`} />
       </div>
-      <div className="ode-layer-score"><div className="workbench-head"><span>{step.label}</span><small>8 measures</small></div><PaginatedPianoScore score={odeToJoy.scores[step.score]} activeBeat={player.activeBeat} playing={playing} title={`Ode to Joy ${step.label}`} /></div>
+      <div className="ode-layer-score">
+        <div className="workbench-head">
+          <span>{step.label}</span>
+          <div className="score-actions">
+            <small>8 measures</small>
+            <CompactPlayButton id={step.id} player={player} events={odeToJoy.layers[step.layer]} tempo={odeToJoy.tempo} title={`Ode to Joy ${step.label}`} />
+          </div>
+        </div>
+        <PaginatedPianoScore score={odeToJoy.scores[step.score]} activeBeat={player.activeBeat} playing={playing} title={`Ode to Joy ${step.label}`} />
+      </div>
     </article>
   )
 }
@@ -226,7 +254,7 @@ function App() {
   const player = usePianoPlayer()
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme
+    applyTheme(theme)
     localStorage.setItem(THEME_KEY, theme)
   }, [theme])
 
@@ -239,6 +267,7 @@ function App() {
   return (
     <div id="top">
       <Header theme={theme} onTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} route={route} />
+      {player.error && <p className="audio-error" role="alert">{player.error.message}</p>}
       {route === 'ode' && <OdePage player={player} />}
       {route === 'library' && <LibraryPage player={player} />}
       <footer><Logo /><p>One beautiful piece at a time.</p><a href="#/">Music library <ArrowRight size={13} /></a></footer>

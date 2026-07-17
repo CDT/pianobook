@@ -17,6 +17,8 @@
           document.querySelector('#theme-color').content = theme === 'dark' ? '#171a18' : '#f4f1e9'
         } catch {
           document.documentElement.dataset.theme = 'light'
+          document.documentElement.style.colorScheme = 'light'
+          document.querySelector('#theme-color').content = '#f4f1e9'
         }
       })()
     </script>

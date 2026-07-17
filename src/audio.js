@@ -74,7 +74,8 @@ export class PianoEngine {
     return {
       startTime: start,
       beatMs: beatSeconds * 1000,
-      totalBeats,
+      totalBeats: Math.ceil(totalBeats),
+      tailSeconds: 1.15,
     }
   }
 

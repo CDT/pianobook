@@ -32,27 +32,34 @@ const pattern = Array.from({ length: 4 }, (_, cycle) => progression.flatMap((har
   return notes.map((note, noteIndex) => event(start + noteIndex * 0.25, note, 0.23, 58 + cycle * 3))
 })).flat()
 
-const finalChord = event(64, ['D2', 'A2', 'D3', 'F#3', 'A3', 'D4'], 3.8, 66)
-const finalBass = event(64, ['D2', 'A2'], 3.8, 62)
-const finalTreble = event(64, ['D3', 'F#3', 'A3', 'D4'], 3.8, 66)
-const whole = [...bass, ...pattern, finalChord]
+const cadenceBass = event(64, 'A2', 3.8, 54)
+const cadenceChord = event(64, ['A3', 'C#4', 'E4', 'G4'], 3.8, 58)
+const cadencePattern = Array.from({ length: 16 }, (_, index) =>
+  event(64 + index * 0.25, ['A3', 'C#4', 'E4', 'G4'][index % 4], 0.23, 64),
+)
+const finalChord = event(68, ['D2', 'A2', 'D3', 'F#3', 'A3', 'D4'], 3.8, 66)
+const finalBass = event(68, ['D2', 'A2'], 3.8, 62)
+const finalTreble = event(68, ['D3', 'F#3', 'A3', 'D4'], 3.8, 66)
+const bassWithCadence = [...bass, cadenceBass, finalBass]
+const patternWithCadence = [...pattern, ...cadencePattern, finalTreble]
+const whole = [...bass, ...pattern, cadenceBass, ...cadencePattern, finalChord]
 
 export const canonInDSimplified = {
   title: 'Canon in D', composer: 'Johann Pachelbel', key: 'D major',
-  arrangement: 'Intermediate piano arrangement', tempo: 72, totalBeats: 68,
+  arrangement: 'Intermediate piano arrangement', tempo: 72, totalBeats: 72,
   events: whole,
-  layers: { bass, harmony: [...bass, ...chords], pattern, whole },
+  layers: { bass: bassWithCadence, harmony: [...bass, ...chords, cadenceBass, cadenceChord, finalChord], pattern: patternWithCadence, whole },
   scores: {
-    bass: { totalBeats: 68, keySignature: 'D', trebleVoices: [], bassVoices: [[...bass, finalBass]] },
-    harmony: { totalBeats: 68, keySignature: 'D', trebleVoices: [[...chords, finalTreble]], bassVoices: [[...bass, finalBass]] },
-    pattern: { totalBeats: 68, keySignature: 'D', trebleVoices: [[...pattern, finalTreble]], bassVoices: [] },
-    whole: { totalBeats: 68, keySignature: 'D', trebleVoices: [[...pattern, finalTreble]], bassVoices: [[...bass, finalBass]] },
+    bass: { totalBeats: 72, keySignature: 'D', trebleVoices: [], bassVoices: [bassWithCadence] },
+    harmony: { totalBeats: 72, keySignature: 'D', trebleVoices: [[...chords, cadenceChord, finalTreble]], bassVoices: [bassWithCadence] },
+    pattern: { totalBeats: 72, keySignature: 'D', trebleVoices: [patternWithCadence], bassVoices: [] },
+    whole: { totalBeats: 72, keySignature: 'D', trebleVoices: [patternWithCadence], bassVoices: [bassWithCadence] },
   },
   steps: [
     { id: 'canon-bass', score: 'bass', layer: 'bass', kicker: 'THE GROUND', label: 'GROUND BASS', title: 'Eight notes hold the entire piece together.', body: 'The left hand repeats D–A–B–F♯–G–D–G–A. Learn it as one calm loop: home, departure, deepening, and return.', listenFor: 'the same bass cycle continuing while everything above it changes.' },
     { id: 'canon-harmony', score: 'harmony', layer: 'harmony', kicker: 'THE HARMONY', label: 'CHORD SHAPES', title: 'Each bass note opens into a chord.', body: 'Compact triads turn the ground into the famous Canon progression. Keep these shapes close to the keys; they are the harmonic map for the flowing version.', listenFor: 'how B minor and F♯ minor darken the middle of each cycle.' },
     { id: 'canon-pattern', score: 'pattern', layer: 'pattern', kicker: 'THE PIANO FIGURE', label: 'RIGHT-HAND PATTERN', title: 'Broken chords make the arrangement sing.', body: 'The right hand rolls through chord tones in even sixteenth-note groups. Shape the highest note gently and let the wrist guide each repeating figure.', listenFor: 'a melodic top line emerging from notes that also spell the harmony.' },
-    { id: 'canon-whole', score: 'whole', layer: 'whole', kicker: 'THE WHOLE', label: 'PIANO ARRANGEMENT', title: 'Build intensity without rushing.', body: 'This intermediate piano version repeats the ground four times, gradually brightening the right hand before settling on a broad final D-major chord.', listenFor: 'four waves of the same progression, each feeling more expansive.' },
+    { id: 'canon-whole', score: 'whole', layer: 'whole', kicker: 'THE WHOLE', label: 'PIANO ARRANGEMENT', title: 'Build intensity without rushing.', body: 'This intermediate piano version repeats the ground four times, then broadens through an A7 cadence before settling on a full D-major chord.', listenFor: 'the added dominant seventh gathering tension, then releasing clearly into D.' },
   ],
   sourceUrl: 'https://imslp.org/wiki/Canon_and_Gigue_in_D_major,_P.37_(Pachelbel,_Johann)',
 }

@@ -1,5 +1,6 @@
 import { odeToJoy } from './odeLesson.js'
 import { preludeInC } from './preludeLesson.js'
+import { canonInD, canonInDSimplified } from './canonLesson.js'
 
 const catalog = [
   ['Minuet in G Major', 'Christian Petzold', 'Baroque dance', 'Beginner'],
@@ -51,25 +52,37 @@ const catalog = [
   ['Nocturne in E-flat Major', 'Frédéric Chopin', 'Nocturne', 'Advanced'],
 ]
 
-const catalogPieces = catalog.map(([title, composer, form, level], index) => ({
-  number: String(index === 0 ? 3 : index + 4).padStart(2, '0'),
+const catalogPieces = catalog.map(([title, composer, form, level]) => ({
   title,
   composer,
   description: form,
   meta: [level, 'Catalog'],
 }))
 
-export const libraryPieces = [
+const canonStudy = {
+  route: '#/canon-in-d-intermediate', title: 'Canon in D — Piano Study', composer: canonInDSimplified.composer,
+  description: 'A shorter intermediate study based on Pachelbel’s ground-bass progression.',
+  meta: [canonInDSimplified.key, 'Intermediate', `${canonInDSimplified.tempo} bpm`],
+  playId: 'canon-study-full', events: canonInDSimplified.events, tempo: canonInDSimplified.tempo,
+}
+
+const preludePiece = {
+  route: '#/prelude-in-c', title: preludeInC.title, composer: preludeInC.composer,
+  description: 'Unfold Bach’s complete harmonic journey through one endlessly flowing pattern.',
+  meta: [preludeInC.key, `${preludeInC.steps.length} layers`, `${preludeInC.tempo} bpm`],
+  playId: 'prelude-full', events: preludeInC.events, tempo: preludeInC.tempo,
+}
+
+const orderedPieces = [
+  canonStudy,
   {
-    number: '01',
-    title: 'Canon in D',
-    composer: 'Johann Pachelbel',
-    description: 'Build a flowing texture from an eight-note bass, chords, rhythm, and melody.',
-    meta: ['D major', 'Catalog'],
+    route: '#/canon-in-d', title: canonInD.title, composer: canonInD.composer,
+    description: 'Hear Pachelbel’s authentic three-part canon over its repeating continuo bass.',
+    meta: [canonInD.key, 'Complete canon', `${canonInD.tempo} bpm`],
+    playId: 'canon-full', events: canonInD.events, tempo: canonInD.tempo,
   },
   {
     route: '#/ode-to-joy',
-    number: '02',
     title: odeToJoy.title,
     composer: odeToJoy.composer,
     description: 'Discover how a stepwise melody and two dependable chords create an anthem.',
@@ -78,11 +91,12 @@ export const libraryPieces = [
     events: odeToJoy.events,
     tempo: odeToJoy.tempo,
   },
-  {
-    route: '#/prelude-in-c', number: '04', title: preludeInC.title, composer: preludeInC.composer,
-    description: 'Unfold Bach’s complete harmonic journey through one endlessly flowing pattern.',
-    meta: [preludeInC.key, `${preludeInC.steps.length} layers`, `${preludeInC.tempo} bpm`],
-    playId: 'prelude-full', events: preludeInC.events, tempo: preludeInC.tempo,
-  },
-  ...catalogPieces,
-].sort((a, b) => Number(a.number) - Number(b.number))
+  catalogPieces[0],
+  preludePiece,
+  ...catalogPieces.slice(1),
+]
+
+export const libraryPieces = orderedPieces.map((piece, index) => ({
+  ...piece,
+  number: String(index + 1).padStart(2, '0'),
+}))

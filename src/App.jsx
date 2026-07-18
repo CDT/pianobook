@@ -15,6 +15,7 @@ import { PianoEngine } from './audio.js'
 import { PaginatedPianoScore } from './PianoScore.jsx'
 import { odeToJoy } from './odeLesson.js'
 import { preludeInC } from './preludeLesson.js'
+import { canonInD, canonInDSimplified } from './canonLesson.js'
 import { libraryPieces } from './library.js'
 
 const THEME_KEY = 'pianobook-theme'
@@ -35,6 +36,8 @@ function getStoredTheme() {
 function getRoute() {
   if (window.location.hash === '#/ode-to-joy') return 'ode'
   if (window.location.hash === '#/prelude-in-c') return 'prelude'
+  if (window.location.hash === '#/canon-in-d') return 'canon'
+  if (window.location.hash === '#/canon-in-d-intermediate') return 'canon-study'
   return 'library'
 }
 
@@ -235,7 +238,7 @@ function OdePage({ player }) {
       <header className="piece-introduction">
         <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
         <div className="piece-introduction-grid">
-          <div><p className="eyebrow">PIECE 02 · DISSECTION</p><h1>{odeToJoy.title}</h1><p className="piece-byline">{odeToJoy.composer}</p></div>
+          <div><p className="eyebrow">PIECE 03 · DISSECTION</p><h1>{odeToJoy.title}</h1><p className="piece-byline">{odeToJoy.composer}</p></div>
           <div className="piece-introduction-copy">
             <p>Start with two grounding bass notes, turn them into harmony, trace the stepwise melody, and finally balance both hands in the complete texture.</p>
             <div className="piece-page-meta"><span>{odeToJoy.key}</span><span>4 / 4</span><span>{odeToJoy.tempo} bpm</span><span>{odeToJoy.steps.length} layers</span></div>
@@ -279,7 +282,7 @@ function PreludePage({ player }) {
       <header className="piece-introduction">
         <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
         <div className="piece-introduction-grid">
-          <div><p className="eyebrow">PIECE 04 · DISSECTION</p><h1>{preludeInC.title}</h1><p className="piece-byline">{preludeInC.composer} · {preludeInC.opus}</p></div>
+          <div><p className="eyebrow">PIECE 05 · DISSECTION</p><h1>{preludeInC.title}</h1><p className="piece-byline">{preludeInC.composer} · {preludeInC.opus}</p></div>
           <div className="piece-introduction-copy">
             <p>Hold the foundation, learn the repeating arpeggio cell, then follow Bach’s complete 35-measure harmonic journey from stillness through tension and home again.</p>
             <div className="piece-page-meta"><span>{preludeInC.key}</span><span>4 / 4</span><span>{preludeInC.tempo} bpm</span><span>{preludeInC.steps.length} layers</span></div>
@@ -290,6 +293,50 @@ function PreludePage({ player }) {
       <nav className="layer-index" aria-label="Lesson layers">{preludeInC.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
       <section className="ode-layers">{preludeInC.steps.map((step, index) => <PreludeStep step={step} index={index} player={player} key={step.id} />)}</section>
       <p className="piece-source"><a href={preludeInC.sourceUrl} target="_blank" rel="noreferrer">Public-domain score source · Mutopia</a></p>
+    </main>
+  )
+}
+
+function CanonStep({ piece, step, index, player }) {
+  const playing = player.playingId === step.id
+  return (
+    <article className="ode-layer">
+      <div className="ode-layer-copy">
+        <span className="ode-layer-number">{String(index + 1).padStart(2, '0')}</span><p className="eyebrow">{step.kicker}</p><h2>{step.title}</h2><p>{step.body}</p>
+        <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {step.listenFor}</span></div>
+        <PlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} label={`Play ${step.label.toLowerCase()}`} />
+      </div>
+      <div className="ode-layer-score">
+        <div className="workbench-head">
+          <span>{step.label}</span>
+          <div className="score-actions">
+            <small>{piece.totalBeats / 4} measures</small>
+            <CompactPlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} title={`${piece.title} ${step.label}`} />
+          </div>
+        </div>
+        <PaginatedPianoScore score={piece.scores[step.score]} activeBeat={player.activeBeat} playing={playing} title={`${piece.title} ${step.label}`} />
+      </div>
+    </article>
+  )
+}
+
+function CanonPage({ player, piece = canonInD, study = false }) {
+  return (
+    <main className="piece-page">
+      <header className="piece-introduction">
+        <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
+        <div className="piece-introduction-grid">
+          <div><p className="eyebrow">{study ? 'PIECE 01 · INTERMEDIATE STUDY' : 'PIECE 02 · COMPLETE PIANO TRANSCRIPTION'}</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
+          <div className="piece-introduction-copy">
+            <p>{study ? 'This shorter piano study uses Pachelbel’s famous ground-bass progression with a newly written broken-chord texture.' : 'This piano transcription preserves Pachelbel’s real canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.'}</p>
+            <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>{study ? 'Intermediate study' : 'Complete canon'}</span></div>
+            <PlayButton id={study ? 'canon-study-full' : 'canon-full'} player={player} events={piece.events} tempo={piece.tempo} label={study ? 'Hear the piano study' : 'Hear the real canon'} />
+          </div>
+        </div>
+      </header>
+      <nav className="layer-index" aria-label="Lesson layers">{piece.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
+      <section className="ode-layers">{piece.steps.map((step, index) => <CanonStep piece={piece} step={step} index={index} player={player} key={step.id} />)}</section>
+      <p className="piece-source"><a href={piece.sourceUrl} target="_blank" rel="noreferrer">{study ? 'Based on Pachelbel’s original Canon' : 'Canonical line source · Mutopia'}</a></p>
     </main>
   )
 }
@@ -316,6 +363,8 @@ function App() {
       {player.error && <p className="audio-error" role="alert">{player.error.message}</p>}
       {route === 'ode' && <OdePage player={player} />}
       {route === 'prelude' && <PreludePage player={player} />}
+      {route === 'canon' && <CanonPage player={player} />}
+      {route === 'canon-study' && <CanonPage player={player} piece={canonInDSimplified} study />}
       {route === 'library' && <LibraryPage player={player} />}
       <footer><Logo /><p>One beautiful piece at a time.</p><a href="#/">Music library <ArrowRight size={13} /></a></footer>
     </div>

@@ -1,8 +1,8 @@
 import { odeToJoy } from './odeLesson.js'
+import { preludeInC } from './preludeLesson.js'
 
 const catalog = [
   ['Minuet in G Major', 'Christian Petzold', 'Baroque dance', 'Beginner'],
-  ['Prelude in C Major', 'Johann Sebastian Bach', 'Well-Tempered Clavier', 'Beginner'],
   ['Musette in D Major', 'Johann Sebastian Bach', 'Baroque dance', 'Beginner'],
   ['Jesu, Joy of Man’s Desiring', 'Johann Sebastian Bach', 'Chorale', 'Intermediate'],
   ['Air on the G String', 'Johann Sebastian Bach', 'Orchestral air', 'Intermediate'],
@@ -52,7 +52,7 @@ const catalog = [
 ]
 
 const catalogPieces = catalog.map(([title, composer, form, level], index) => ({
-  number: String(index + 3).padStart(2, '0'),
+  number: String(index === 0 ? 3 : index + 4).padStart(2, '0'),
   title,
   composer,
   description: form,
@@ -78,5 +78,11 @@ export const libraryPieces = [
     events: odeToJoy.events,
     tempo: odeToJoy.tempo,
   },
+  {
+    route: '#/prelude-in-c', number: '04', title: preludeInC.title, composer: preludeInC.composer,
+    description: 'Unfold Bach’s complete harmonic journey through one endlessly flowing pattern.',
+    meta: [preludeInC.key, `${preludeInC.steps.length} layers`, `${preludeInC.tempo} bpm`],
+    playId: 'prelude-full', events: preludeInC.events, tempo: preludeInC.tempo,
+  },
   ...catalogPieces,
-]
+].sort((a, b) => Number(a.number) - Number(b.number))

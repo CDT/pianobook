@@ -10,11 +10,19 @@ const melodyPitches = [
   'D4', 'D4', 'E4', 'F#4', 'F#4', 'E4', 'E4',
   'F#4', 'F#4', 'G4', 'A4', 'A4', 'G4', 'F#4', 'E4',
   'D4', 'D4', 'E4', 'F#4', 'E4', 'D4', 'D4',
+  'E4', 'E4', 'F#4', 'D4', 'E4', 'F#4', 'G4', 'F#4', 'D4',
+  'E4', 'F#4', 'G4', 'F#4', 'E4', 'D4', 'E4', 'A4',
+  'F#4', 'F#4', 'G4', 'A4', 'A4', 'G4', 'F#4', 'E4',
+  'D4', 'D4', 'E4', 'F#4', 'E4', 'D4', 'D4',
 ]
 
 const melodyBeats = [
   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13.5, 14,
   16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29.5, 30,
+  32, 33, 34, 35, 36, 37, 37.5, 38, 39,
+  40, 41, 41.5, 42, 43, 44, 45, 46,
+  48, 49, 50, 51, 52, 53, 54, 55,
+  56, 57, 58, 59, 60, 61.5, 62,
 ]
 
 const melodyDurations = {
@@ -24,6 +32,14 @@ const melodyDurations = {
   28: 1.5,
   29.5: 0.5,
   30: 2,
+  37: 0.5,
+  37.5: 0.5,
+  41: 0.5,
+  41.5: 0.5,
+  46: 2,
+  60: 1.5,
+  61.5: 0.5,
+  62: 2,
 }
 
 const melody = melodyPitches.map((pitch, index) => {
@@ -33,6 +49,14 @@ const melody = melodyPitches.map((pitch, index) => {
 })
 
 const harmony = [
+  { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
+  { root: 'A2', notes: ['A3', 'C#4', 'E4'] },
+  { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
+  { root: 'A2', notes: ['A3', 'C#4', 'E4'] },
+  { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
+  { root: 'A2', notes: ['A3', 'C#4', 'E4'] },
+  { root: 'A2', notes: ['A3', 'C#4', 'E4'] },
+  { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
   { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
   { root: 'A2', notes: ['A3', 'C#4', 'E4'] },
   { root: 'D2', notes: ['D3', 'F#3', 'A3'] },
@@ -54,7 +78,7 @@ export const odeToJoy = {
   composer: 'Ludwig van Beethoven',
   key: 'D major',
   tempo: 92,
-  totalBeats: 32,
+  totalBeats: 64,
   events: [...bass, ...accompaniment, ...melody],
   layers: {
     bass,
@@ -63,10 +87,10 @@ export const odeToJoy = {
     whole: [...bass, ...accompaniment, ...melody],
   },
   scores: {
-    bass: { totalBeats: 32, trebleVoices: [], bassVoices: [bass] },
-    harmony: { totalBeats: 32, trebleVoices: [chords], bassVoices: [bass] },
-    melody: { totalBeats: 32, trebleVoices: [melody], bassVoices: [] },
-    whole: { totalBeats: 32, trebleVoices: [melody], bassVoices: [accompaniment, bass] },
+    bass: { totalBeats: 64, trebleVoices: [], bassVoices: [bass] },
+    harmony: { totalBeats: 64, trebleVoices: [chords], bassVoices: [bass] },
+    melody: { totalBeats: 64, trebleVoices: [melody], bassVoices: [] },
+    whole: { totalBeats: 64, trebleVoices: [melody], bassVoices: [accompaniment, bass] },
   },
   steps: [
     {

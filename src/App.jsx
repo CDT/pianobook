@@ -14,6 +14,7 @@ import {
 import { PianoEngine } from './audio.js'
 import { PaginatedPianoScore } from './PianoScore.jsx'
 import { odeToJoy } from './odeLesson.js'
+import { preludeInC } from './preludeLesson.js'
 import { libraryPieces } from './library.js'
 
 const THEME_KEY = 'pianobook-theme'
@@ -33,6 +34,7 @@ function getStoredTheme() {
 
 function getRoute() {
   if (window.location.hash === '#/ode-to-joy') return 'ode'
+  if (window.location.hash === '#/prelude-in-c') return 'prelude'
   return 'library'
 }
 
@@ -217,7 +219,7 @@ function OdeStep({ step, index, player }) {
         <div className="workbench-head">
           <span>{step.label}</span>
           <div className="score-actions">
-            <small>8 measures</small>
+            <small>{odeToJoy.totalBeats / 4} measures</small>
             <CompactPlayButton id={step.id} player={player} events={odeToJoy.layers[step.layer]} tempo={odeToJoy.tempo} title={`Ode to Joy ${step.label}`} />
           </div>
         </div>
@@ -248,6 +250,50 @@ function OdePage({ player }) {
   )
 }
 
+function PreludeStep({ step, index, player }) {
+  const playing = player.playingId === step.id
+  return (
+    <article className="ode-layer">
+      <div className="ode-layer-copy">
+        <span className="ode-layer-number">{String(index + 1).padStart(2, '0')}</span><p className="eyebrow">{step.kicker}</p><h2>{step.title}</h2><p>{step.body}</p>
+        <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {step.listenFor}</span></div>
+        <PlayButton id={step.id} player={player} events={preludeInC.layers[step.layer]} tempo={preludeInC.tempo} label={`Play ${step.label.toLowerCase()}`} />
+      </div>
+      <div className="ode-layer-score">
+        <div className="workbench-head">
+          <span>{step.label}</span>
+          <div className="score-actions">
+            <small>{preludeInC.totalBeats / 4} measures</small>
+            <CompactPlayButton id={step.id} player={player} events={preludeInC.layers[step.layer]} tempo={preludeInC.tempo} title={`${preludeInC.title} ${step.label}`} />
+          </div>
+        </div>
+        <PaginatedPianoScore score={preludeInC.scores[step.score]} activeBeat={player.activeBeat} playing={playing} title={`${preludeInC.title} ${step.label}`} />
+      </div>
+    </article>
+  )
+}
+
+function PreludePage({ player }) {
+  return (
+    <main className="piece-page">
+      <header className="piece-introduction">
+        <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
+        <div className="piece-introduction-grid">
+          <div><p className="eyebrow">PIECE 04 · DISSECTION</p><h1>{preludeInC.title}</h1><p className="piece-byline">{preludeInC.composer} · {preludeInC.opus}</p></div>
+          <div className="piece-introduction-copy">
+            <p>Hold the foundation, learn the repeating arpeggio cell, then follow Bach’s complete 35-measure harmonic journey from stillness through tension and home again.</p>
+            <div className="piece-page-meta"><span>{preludeInC.key}</span><span>4 / 4</span><span>{preludeInC.tempo} bpm</span><span>{preludeInC.steps.length} layers</span></div>
+            <PlayButton id="prelude-full" player={player} events={preludeInC.events} tempo={preludeInC.tempo} label="Hear the piece" />
+          </div>
+        </div>
+      </header>
+      <nav className="layer-index" aria-label="Lesson layers">{preludeInC.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
+      <section className="ode-layers">{preludeInC.steps.map((step, index) => <PreludeStep step={step} index={index} player={player} key={step.id} />)}</section>
+      <p className="piece-source"><a href={preludeInC.sourceUrl} target="_blank" rel="noreferrer">Public-domain score source · Mutopia</a></p>
+    </main>
+  )
+}
+
 function App() {
   const [theme, setTheme] = useState(getStoredTheme)
   const [route, setRoute] = useState(getRoute)
@@ -269,6 +315,7 @@ function App() {
       <Header theme={theme} onTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} route={route} />
       {player.error && <p className="audio-error" role="alert">{player.error.message}</p>}
       {route === 'ode' && <OdePage player={player} />}
+      {route === 'prelude' && <PreludePage player={player} />}
       {route === 'library' && <LibraryPage player={player} />}
       <footer><Logo /><p>One beautiful piece at a time.</p><a href="#/">Music library <ArrowRight size={13} /></a></footer>
     </div>

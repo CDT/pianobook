@@ -125,8 +125,8 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
       const trebleStave = new Stave(x, 22, MEASURE_WIDTH)
       const bassStave = new Stave(x, 126, MEASURE_WIDTH)
       if (measure === 0) {
-        trebleStave.addClef('treble').addKeySignature('D').addTimeSignature('4/4')
-        bassStave.addClef('bass').addKeySignature('D').addTimeSignature('4/4')
+        trebleStave.addClef('treble').addKeySignature(score.keySignature ?? 'D').addTimeSignature('4/4')
+        bassStave.addClef('bass').addKeySignature(score.keySignature ?? 'D').addTimeSignature('4/4')
       }
       trebleStave.setContext(context).draw()
       bassStave.setContext(context).draw()
@@ -185,7 +185,7 @@ export default function PianoScore({ score, activeBeat, playing, title }) {
 
   return (
     <div className="piano-score" aria-label={`${title} piano sheet music`}>
-      <div className="score-label"><span>PIANO SCORE</span><small>properly voiced · D major · 4/4</small></div>
+      <div className="score-label"><span>PIANO SCORE</span><small>properly voiced · {score.keySignature === 'C' ? 'C major' : 'D major'} · 4/4</small></div>
       <div className="score-scroll">
         <div className="engraved-score" ref={scoreRoot} style={{ width: `${width}px` }} />
         {playing && playheadX !== null && <i className="engraved-playhead" style={{ left: `${playheadX}px` }} />}
@@ -215,6 +215,7 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title }) {
       .map((event) => ({ ...event, beat: event.beat - pageStart })))
     return {
       totalBeats: pageBeats,
+      keySignature: score.keySignature,
       trebleVoices: sliceVoices(score.trebleVoices),
       bassVoices: sliceVoices(score.bassVoices),
     }

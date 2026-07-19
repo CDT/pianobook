@@ -3,6 +3,7 @@ import { CacheStorage, SplendidGrandPiano } from 'smplr'
 // A focused sample set; smplr pitch-shifts between these recorded pitches.
 const LESSON_SAMPLE_PITCHES = [26, 31, 35, 38, 43, 47, 50, 55, 59, 62, 67, 71, 74, 79, 83, 86, 91, 95, 98]
 const PIANO_SAMPLE_BASE_URL = `${import.meta.env.BASE_URL}audio/splendid-grand-piano`
+const SAMPLE_VELOCITY_RANGE = [68, 84]
 
 function cachedStorage() {
   if (!window.isSecureContext || !('caches' in window)) return null
@@ -37,7 +38,7 @@ export class PianoEngine {
         decayTime: 1.15,
         notesToLoad: {
           notes: LESSON_SAMPLE_PITCHES,
-          velocityRange: [1, 127],
+          velocityRange: SAMPLE_VELOCITY_RANGE,
         },
         ...(storage ? { storage } : {}),
       })
@@ -71,7 +72,10 @@ export class PianoEngine {
           stopId: `${eventIndex}-${noteIndex}-${start}`,
           time: start + (audibleBeat - offsetBeat) * beatSeconds,
           duration: Math.max(0.12, remainingDuration * beatSeconds * 0.92),
-          velocity: event.velocity ?? 68,
+          velocity: Math.min(
+            SAMPLE_VELOCITY_RANGE[1],
+            Math.max(SAMPLE_VELOCITY_RANGE[0], event.velocity ?? 78),
+          ),
         })
         this.scheduledStops.push(stopNote)
       })

@@ -132,9 +132,7 @@ export default function PianoScore({ score, activeBeat, playing, title, printLay
     let cancelled = false
 
     const engrave = async () => {
-      const { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveConnector, StaveNote, Stem, VexFlow, Voice } = await import('vexflow/bravura')
-      await VexFlow.loadFonts('Bravura', 'Academico')
-      VexFlow.setFonts('Bravura', 'Academico')
+      const { Accidental, Beam, Dot, Formatter, Renderer, Stave, StaveConnector, StaveNote, Stem, Voice } = await import('vexflow/bravura')
       if (cancelled) return
       const renderer = new Renderer(root, Renderer.Backends.SVG)
       renderer.resize(width, height)

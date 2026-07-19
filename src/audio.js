@@ -2,6 +2,7 @@ import { CacheStorage, SplendidGrandPiano } from 'smplr'
 
 // A focused sample set; smplr pitch-shifts between these recorded pitches.
 const LESSON_SAMPLE_PITCHES = [26, 31, 35, 38, 43, 47, 50, 55, 59, 62, 67, 71, 74, 79, 83, 86, 91, 95, 98]
+const PIANO_SAMPLE_BASE_URL = `${import.meta.env.BASE_URL}audio/splendid-grand-piano`
 
 function cachedStorage() {
   if (!window.isSecureContext || !('caches' in window)) return null
@@ -29,6 +30,8 @@ export class PianoEngine {
     if (!this.piano) {
       const storage = cachedStorage()
       this.piano = SplendidGrandPiano(this.context, {
+        baseUrl: PIANO_SAMPLE_BASE_URL,
+        formats: ['ogg'],
         volume: 88,
         velocity: 78,
         decayTime: 1.15,

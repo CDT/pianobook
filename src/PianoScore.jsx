@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Maximize2, Minimize2, Pause, Play, Square } from 'lucide-react'
+import { Maximize2, Minimize2, Pause, Play, Square, ZoomIn, ZoomOut } from 'lucide-react'
 
 const MEASURE_BEATS = 4
 const MEASURE_WIDTH = 340
@@ -289,6 +289,7 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
   const pageCount = Math.ceil(score.totalBeats / PAGE_BEATS)
   const [page, setPage] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [zoom, setZoom] = useState(1)
   const scoreViewer = useRef(null)
   const wasPlaying = useRef(false)
 
@@ -313,6 +314,8 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
     else await scoreViewer.current?.requestFullscreen()
   }
 
+  const changeZoom = (amount) => setZoom((current) => Math.min(1.5, Math.max(0.5, current + amount)))
+
   return (
     <div className="paginated-score" ref={scoreViewer}>
       <div className="score-pagination">
@@ -323,6 +326,11 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
               {playing ? <Pause size={14} fill="currentColor" /> : <Play size={14} fill="currentColor" />}
             </button>
             <button onClick={onStop} disabled={!playing && activeBeat <= 0} aria-label="Stop score" title="Stop"><Square size={13} fill="currentColor" /></button>
+          </div>}
+          {isFullscreen && <div className="score-zoom" role="group" aria-label="Score zoom controls">
+            <button onClick={() => changeZoom(-0.25)} disabled={zoom <= 0.5} aria-label="Zoom out" title="Zoom out"><ZoomOut size={15} /></button>
+            <button className="score-zoom-value" onClick={() => setZoom(1)} aria-label={`Reset zoom from ${Math.round(zoom * 100)} percent`} title="Reset zoom">{Math.round(zoom * 100)}%</button>
+            <button onClick={() => changeZoom(0.25)} disabled={zoom >= 1.5} aria-label="Zoom in" title="Zoom in"><ZoomIn size={15} /></button>
           </div>}
           {!isFullscreen && <>
             <button onClick={() => setPage((current) => Math.max(0, current - 1))} disabled={page === 0}>Previous</button>
@@ -336,7 +344,7 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
         </div>
       </div>
       {isFullscreen
-        ? <PrintedPianoScore score={score} activeBeat={activeBeat} playing={playing} title={title} onSeek={onSeek} />
+        ? <div className="printed-score-zoom" style={{ zoom }}><PrintedPianoScore score={score} activeBeat={activeBeat} playing={playing} title={title} onSeek={onSeek} /></div>
         : <PianoScore score={pageScore} activeBeat={Math.max(0, activeBeat - pageStart)} playing={playing} title={title} beatOffset={pageStart} onSeek={onSeek} />}
     </div>
   )

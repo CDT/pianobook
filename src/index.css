@@ -141,9 +141,14 @@ a.library-card-title:hover h2 { color: var(--coral); }
 .score-transport { display: flex; align-items: center; gap: 6px; padding-right: 8px; border-right: 1px solid var(--line); }
 .score-pagination .score-transport button { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); }
 .score-pagination .score-transport button:hover:not(:disabled) { color: var(--coral); border-color: var(--coral); }
+.score-zoom { display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid var(--line); }
+.score-pagination .score-zoom button { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); }
+.score-pagination .score-zoom button:hover:not(:disabled) { color: var(--coral); border-color: var(--coral); }
+.score-pagination .score-zoom .score-zoom-value { width: 44px; font-variant-numeric: tabular-nums; }
 .paginated-score:fullscreen { width: 100%; height: 100%; overflow-y: auto; padding: 18px clamp(12px, 3vw, 40px) 50px; background: #d8d6d0; }
 .paginated-score:fullscreen > .score-pagination { position: sticky; z-index: 2; top: -18px; max-width: 794px; margin: 0 auto 18px; padding: 12px 14px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--line); backdrop-filter: blur(10px); }
 .printed-score { display: grid; gap: 24px; justify-content: center; }
+.printed-score-zoom { width: fit-content; margin: 0 auto; }
 .printed-score-page { width: 794px; min-height: 1123px; padding: 38px 0 45px; overflow: hidden; color: #272823; background: #fffdf7; box-shadow: 0 5px 20px rgba(23, 35, 31, .18); }
 .printed-score-page > header { display: flex; justify-content: space-between; margin: 0 36px; padding-bottom: 10px; border-bottom: 1px solid #ddd6c9; font-family: 'Instrument Serif', serif; }
 .printed-score-page > header small { color: #686d68; font-family: 'DM Sans', sans-serif; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
@@ -180,6 +185,10 @@ footer > a { justify-self: end; display: flex; align-items: center; gap: 8px; fo
   .ode-layer-score { padding: 16px; box-shadow: 5px 5px 0 var(--paper-deep); }
   .paginated-score:fullscreen { padding-inline: 0; }
   .paginated-score:fullscreen > .score-pagination { margin-inline: 10px; }
+  .paginated-score:fullscreen > .score-pagination { gap: 8px; }
+  .paginated-score:fullscreen > .score-pagination > span { display: none; }
+  .paginated-score:fullscreen > .score-pagination > div { width: 100%; justify-content: space-between; gap: 6px; }
+  .score-transport, .score-zoom { padding-right: 6px; }
   .printed-score { justify-content: start; width: 794px; transform-origin: top left; }
 }
 

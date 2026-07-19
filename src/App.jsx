@@ -1,18 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   ChevronRight,
   LoaderCircle,
+  Maximize2,
   Moon,
   Pause,
   Play,
   Search,
   Sun,
   Volume2,
+  X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 import { PianoEngine } from './audio.js'
-import { PaginatedPianoScore } from './PianoScore.jsx'
+import { FullPianoScore, PaginatedPianoScore } from './PianoScore.jsx'
 import { canonInD } from './lessons/index.js'
 import { libraryPieces } from './library.js'
 
@@ -227,8 +231,55 @@ function CanonStep({ piece, step, index, player }) {
   )
 }
 
+function FullScoreModal({ piece, player, open, onClose }) {
+  const [zoom, setZoom] = useState(1)
+  const playing = player.playingId === 'canon-full'
+
+  useEffect(() => {
+    if (!open) return undefined
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event) => { if (event.key === 'Escape') onClose() }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [onClose, open])
+
+  if (!open) return null
+
+  return (
+    <div className="score-modal" role="dialog" aria-modal="true" aria-labelledby="full-score-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <div className="score-modal-panel">
+        <header className="score-modal-head">
+          <div>
+            <p className="eyebrow">FULL SHEET MUSIC · {piece.totalBeats / 4} MEASURES</p>
+            <h2 id="full-score-title">{piece.title}</h2>
+            <p>{piece.composer} · three canon voices and continuo</p>
+          </div>
+          <div className="score-modal-controls" aria-label="Full score controls">
+            <CompactPlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} title={`${piece.title} complete canon`} />
+            <span className="score-zoom-controls">
+              <button onClick={() => setZoom((current) => Math.max(0.5, current - 0.25))} disabled={zoom === 0.5} aria-label="Zoom out"><ZoomOut size={17} /></button>
+              <button className="zoom-level" onClick={() => setZoom(1)} aria-label="Reset zoom to 100 percent">{Math.round(zoom * 100)}%</button>
+              <button onClick={() => setZoom((current) => Math.min(1.5, current + 0.25))} disabled={zoom === 1.5} aria-label="Zoom in"><ZoomIn size={17} /></button>
+            </span>
+            <button className="score-modal-close" onClick={onClose} aria-label="Close full sheet music" autoFocus><X size={20} /></button>
+          </div>
+        </header>
+        <div className="score-modal-body">
+          <FullPianoScore score={piece.scores.whole} activeBeat={player.activeBeat} playing={playing} title={`${piece.title} complete canon`} zoom={zoom} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CanonPage({ player }) {
   const piece = canonInD
+  const [fullScoreOpen, setFullScoreOpen] = useState(false)
+  const closeFullScore = useCallback(() => setFullScoreOpen(false), [])
   return (
     <main className="piece-page">
       <header className="piece-introduction">
@@ -236,15 +287,19 @@ function CanonPage({ player }) {
         <div className="piece-introduction-grid">
           <div><p className="eyebrow">PIECE 01 · COMPLETE PIANO TRANSCRIPTION</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
           <div className="piece-introduction-copy">
-            <p>This piano transcription preserves Pachelbel’s real canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
+            <p>This piano transcription preserves Pachelbel’s canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
             <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>Complete canon</span></div>
-            <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the real canon" />
+            <div className="piece-listen-actions">
+              <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the complete canon" />
+              <button className="full-score-button" onClick={() => setFullScoreOpen(true)}><Maximize2 size={16} /> View full sheet</button>
+            </div>
           </div>
         </div>
       </header>
       <nav className="layer-index" aria-label="Lesson layers">{piece.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
       <section className="ode-layers">{piece.steps.map((step, index) => <CanonStep piece={piece} step={step} index={index} player={player} key={step.id} />)}</section>
       <p className="piece-source"><a href={piece.sourceUrl} target="_blank" rel="noreferrer">Canonical line source · Mutopia</a></p>
+      <FullScoreModal piece={piece} player={player} open={fullScoreOpen} onClose={closeFullScore} />
     </main>
   )
 }

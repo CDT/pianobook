@@ -43,28 +43,28 @@ const canonVoice = (offset, velocity) => sourceCanonLine
 const firstVoice = canonVoice(0, 68)
 const secondVoice = canonVoice(8, 60)
 const thirdVoice = canonVoice(16, 55)
-const realBass = Array.from({ length: 225 }, (_, beat) =>
+const canonBass = Array.from({ length: 225 }, (_, beat) =>
   event(beat, progression[beat % progression.length], 0.95, 48),
 )
 const canonVoices = [...firstVoice, ...secondVoice, ...thirdVoice]
-const realWhole = [...realBass, ...canonVoices]
+const completeCanon = [...canonBass, ...canonVoices]
 
 export const canonInD = {
   title: 'Canon in D', composer: 'Johann Pachelbel', key: 'D major',
   arrangement: 'Complete canon · piano transcription', tempo: 56, totalBeats: 228,
-  events: realWhole,
-  layers: { bass: realBass, subject: firstVoice, entries: canonVoices, whole: realWhole },
+  events: completeCanon,
+  layers: { bass: canonBass, subject: firstVoice, entries: canonVoices, whole: completeCanon },
   scores: {
-    bass: { totalBeats: 228, keySignature: 'D', trebleVoices: [], bassVoices: [realBass] },
+    bass: { totalBeats: 228, keySignature: 'D', trebleVoices: [], bassVoices: [canonBass] },
     subject: { totalBeats: 228, keySignature: 'D', trebleVoices: [firstVoice], bassVoices: [] },
     entries: { totalBeats: 228, keySignature: 'D', trebleVoices: [firstVoice, secondVoice, thirdVoice], bassVoices: [] },
-    whole: { totalBeats: 228, keySignature: 'D', trebleVoices: [firstVoice, secondVoice, thirdVoice], bassVoices: [realBass] },
+    whole: { totalBeats: 228, keySignature: 'D', trebleVoices: [firstVoice, secondVoice, thirdVoice], bassVoices: [canonBass] },
   },
   steps: [
-    { id: 'canon-real-bass', score: 'bass', layer: 'bass', kicker: 'THE CONTINUO', label: 'ORIGINAL BASS', title: 'The ground bass repeats without changing.', body: 'Pachelbel’s continuo cycles through D–A–B–F♯–G–D–G–A beneath the complete composition. On piano, keep it quiet, regular, and independent.', listenFor: 'the eight-note ground acting as a fixed floor beneath every variation.' },
+    { id: 'canon-bass', score: 'bass', layer: 'bass', kicker: 'THE CONTINUO', label: 'ORIGINAL BASS', title: 'The ground bass repeats without changing.', body: 'Pachelbel’s continuo cycles through D–A–B–F♯–G–D–G–A beneath the complete composition. On piano, keep it quiet, regular, and independent.', listenFor: 'the eight-note ground acting as a fixed floor beneath every variation.' },
     { id: 'canon-subject', score: 'subject', layer: 'subject', kicker: 'THE SUBJECT', label: 'CANON SUBJECT', title: 'One violin line contains the whole unfolding story.', body: 'This is the authentic melodic line from the score, transferred to the piano. Its values gradually move from broad half notes into quicker figuration and a final cadence.', listenFor: 'the melody becoming more active while the harmonic cycle stays the same.' },
     { id: 'canon-entries', score: 'entries', layer: 'entries', kicker: 'THE CANON', label: 'THREE ENTRIES', title: 'The same line enters three times.', body: 'The second and third voices begin two measures apart. That strict imitation—not merely the familiar chord progression—is what makes the piece a canon.', listenFor: 'each new entry echoing the first while older voices continue independently.' },
-    { id: 'canon-real-whole', score: 'whole', layer: 'whole', kicker: 'THE PIANO VERSION', label: 'COMPLETE CANON', title: 'Four original parts become one piano texture.', body: 'This transcription preserves all three canonical voices and the continuo bass. Bring out whichever entry carries the newest idea, while keeping the ground unobtrusive.', listenFor: 'real counterpoint: four independent lines sharing one harmonic foundation.' },
+    { id: 'canon-full', score: 'whole', layer: 'whole', kicker: 'THE PIANO VERSION', label: 'COMPLETE CANON', title: 'Four original parts become one piano texture.', body: 'This transcription preserves all three canonical voices and the continuo bass. Bring out whichever entry carries the newest idea, while keeping the ground unobtrusive.', listenFor: 'four independent lines sharing one harmonic foundation.' },
   ],
   sourceUrl: 'https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2047',
 }

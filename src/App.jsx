@@ -67,7 +67,9 @@ function usePianoPlayer() {
   const timer = useRef(null)
   const request = useRef(0)
   const playingIdRef = useRef(null)
+  const pausedIdRef = useRef(null)
   const [playingId, setPlayingId] = useState(null)
+  const [pausedId, setPausedId] = useState(null)
   const [loadingId, setLoadingId] = useState(null)
   const [error, setError] = useState(null)
   const [activeBeat, setActiveBeat] = useState(-1)
@@ -77,8 +79,20 @@ function usePianoPlayer() {
     clearInterval(timer.current)
     if (stopAudio) engine.current?.stop()
     playingIdRef.current = null
+    pausedIdRef.current = null
     setPlayingId(null)
+    setPausedId(null)
     setActiveBeat(-1)
+  }
+
+  const pause = () => {
+    if (!playingIdRef.current) return
+    clearInterval(timer.current)
+    engine.current?.stop()
+    pausedIdRef.current = playingIdRef.current
+    playingIdRef.current = null
+    setPausedId(pausedIdRef.current)
+    setPlayingId(null)
   }
 
   useEffect(() => () => {
@@ -86,11 +100,12 @@ function usePianoPlayer() {
     engine.current?.dispose()
   }, [])
 
-  const play = async (id, events, tempo) => {
-    if (playingIdRef.current === id) {
-      stop()
+  const play = async (id, events, tempo, requestedBeat) => {
+    if (playingIdRef.current === id && requestedBeat === undefined) {
+      pause()
       return
     }
+    const offsetBeat = requestedBeat ?? (pausedIdRef.current === id ? Math.max(0, activeBeat) : 0)
     stop()
     const playRequest = ++request.current
     setError(null)
@@ -113,22 +128,22 @@ function usePianoPlayer() {
     if (playRequest !== request.current) return
     setLoadingId(null)
 
-    const schedule = engine.current.scheduleEvents(events, tempo)
+    const schedule = engine.current.scheduleEvents(events, tempo, offsetBeat)
     playingIdRef.current = id
     setPlayingId(id)
-    setActiveBeat(0)
+    setActiveBeat(offsetBeat)
     timer.current = setInterval(() => {
       const elapsedSeconds = engine.current.currentTime - schedule.startTime
-      const beat = Math.max(0, elapsedSeconds / (schedule.beatMs / 1000))
+      const beat = schedule.offsetBeat + Math.max(0, elapsedSeconds / (schedule.beatMs / 1000))
       if (beat >= schedule.totalBeats) {
         clearInterval(timer.current)
         setActiveBeat(schedule.totalBeats)
         timer.current = setTimeout(() => stop(false), schedule.tailSeconds * 1000)
-      } else setActiveBeat(Math.floor(beat * 2) / 2)
+      } else setActiveBeat(Math.floor(beat * 4) / 4)
     }, 60)
   }
 
-  return { play, playingId, loadingId, error, activeBeat }
+  return { play, pause, stop, playingId, pausedId, loadingId, error, activeBeat }
 }
 
 function PlayButton({ id, player, events, tempo, label = 'Listen' }) {
@@ -221,7 +236,15 @@ function CanonStep({ piece, step, index, player }) {
             <CompactPlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} title={`${piece.title} ${step.label}`} />
           </div>
         </div>
-        <PaginatedPianoScore score={piece.scores[step.score]} activeBeat={player.activeBeat} playing={playing} title={`${piece.title} ${step.label}`} />
+        <PaginatedPianoScore
+          score={piece.scores[step.score]}
+          activeBeat={player.activeBeat}
+          playing={playing}
+          title={`${piece.title} ${step.label}`}
+          onTogglePlayback={() => player.play(step.id, piece.layers[step.layer], piece.tempo)}
+          onStop={player.stop}
+          onSeek={(beat) => player.play(step.id, piece.layers[step.layer], piece.tempo, beat)}
+        />
       </div>
     </article>
   )
@@ -236,9 +259,9 @@ function CanonPage({ player }) {
         <div className="piece-introduction-grid">
           <div><p className="eyebrow">PIECE 01 · COMPLETE PIANO TRANSCRIPTION</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
           <div className="piece-introduction-copy">
-            <p>This piano transcription preserves Pachelbel’s real canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
+            <p>This piano transcription preserves Pachelbel’s canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
             <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>Complete canon</span></div>
-            <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the real canon" />
+            <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the canon" />
           </div>
         </div>
       </header>

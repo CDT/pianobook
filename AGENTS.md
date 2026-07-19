@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is a frontend-only React 19 application built with Vite. Application code lives in `src/`: `App.jsx` contains the primary UI, `audio.js` wraps `smplr` playback, `PianoScore.jsx` renders the VexFlow notation, `odeLesson.js` and `library.js` hold lesson and catalog data, and `index.css` contains global styles. `src/main.jsx` is the browser entry point. Root configuration includes `vite.config.js`, `eslint.config.js`, and `index.html`. Production output is generated in `dist/`; do not commit generated files. Deployment is defined in `.github/workflows/deploy.yml`.
+This repository is a frontend-only React 19 application built with Vite. Application code lives in `src/`: `App.jsx` contains the primary UI, `audio.js` wraps `smplr` playback, `PianoScore.jsx` renders the VexFlow notation, `lessons/` and `library.js` hold lesson and catalog data, and `index.css` contains global styles. `src/main.jsx` is the browser entry point. Root configuration includes `vite.config.js`, `eslint.config.js`, and `index.html`. Production output is generated in `dist/`; do not commit generated files. Deployment is defined in `.github/workflows/deploy.yml`.
 
 ## Build, Test, and Development Commands
 

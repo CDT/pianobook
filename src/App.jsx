@@ -13,9 +13,12 @@ import {
 } from 'lucide-react'
 import { PianoEngine } from './audio.js'
 import { PaginatedPianoScore } from './PianoScore.jsx'
-import { odeToJoy } from './odeLesson.js'
-import { preludeInC } from './preludeLesson.js'
-import { canonInD, canonInDSimplified } from './canonLesson.js'
+import {
+  canonInD,
+  canonInDSimplified,
+  odeToJoy,
+  preludeInC,
+} from './lessons/index.js'
 import { libraryPieces } from './library.js'
 
 const THEME_KEY = 'pianobook-theme'

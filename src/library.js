@@ -1,6 +1,9 @@
-import { odeToJoy } from './odeLesson.js'
-import { preludeInC } from './preludeLesson.js'
-import { canonInD, canonInDSimplified } from './canonLesson.js'
+import {
+  canonInD,
+  canonInDSimplified,
+  odeToJoy,
+  preludeInC,
+} from './lessons/index.js'
 
 const catalog = [
   ['Minuet in G Major', 'Christian Petzold', 'Baroque dance', 'Beginner'],

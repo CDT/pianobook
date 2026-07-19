@@ -1,3 +1,1 @@
-export { odeToJoy } from './ode.js'
-export { preludeInC } from './prelude.js'
-export { canonInD, canonInDSimplified } from './canon.js'
+export { canonInD } from './canon.js'

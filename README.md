@@ -2,18 +2,16 @@
 
 Piano Book is an interactive, frontend-only library for learning piano pieces from the inside out.
 
-Choose a tune from the searchable catalog, listen to it, and study its musical jobs from the foundation upward.
+Choose a piece from the library, listen to it, and study its musical jobs from the foundation upward.
 
 ## What is included
 
 The current application includes:
 
-- A compact, searchable catalog designed to scale to many pieces
-- A complete Ode to Joy dissection covering bass, harmony, melody, and the full texture
+- A compact, searchable music library
+- A complete Canon in D transcription covering the continuo, subject, canon entries, and full texture
 - Sampled-piano playback with synchronized, paginated sheet music
 - Responsive layouts and persistent light/dark themes
-
-Catalog entries without a finished lesson are intentionally listed without playback or lesson links.
 
 ## Technology
 

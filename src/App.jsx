@@ -285,7 +285,7 @@ function PreludePage({ player }) {
       <header className="piece-introduction">
         <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
         <div className="piece-introduction-grid">
-          <div><p className="eyebrow">PIECE 05 · DISSECTION</p><h1>{preludeInC.title}</h1><p className="piece-byline">{preludeInC.composer} · {preludeInC.opus}</p></div>
+          <div><p className="eyebrow">PIECE 04 · DISSECTION</p><h1>{preludeInC.title}</h1><p className="piece-byline">{preludeInC.composer} · {preludeInC.opus}</p></div>
           <div className="piece-introduction-copy">
             <p>Hold the foundation, learn the repeating arpeggio cell, then follow Bach’s complete 35-measure harmonic journey from stillness through tension and home again.</p>
             <div className="piece-page-meta"><span>{preludeInC.key}</span><span>4 / 4</span><span>{preludeInC.tempo} bpm</span><span>{preludeInC.steps.length} layers</span></div>

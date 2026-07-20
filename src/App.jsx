@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ChevronRight,
   LoaderCircle,
+  Maximize2,
   Moon,
   Pause,
   Play,
@@ -219,7 +220,7 @@ function LibraryPage({ player }) {
   )
 }
 
-function CanonStep({ piece, step, index, player }) {
+function CanonStep({ piece, step, index, player, scoreRef }) {
   const playing = player.playingId === step.id
   return (
     <article className="ode-layer">
@@ -232,11 +233,12 @@ function CanonStep({ piece, step, index, player }) {
         <div className="workbench-head">
           <span>{step.label}</span>
           <div className="score-actions">
-            <small>{piece.totalBeats / 4} measures</small>
+            <small>{Math.ceil(piece.totalBeats / 4)} measures</small>
             <CompactPlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} title={`${piece.title} ${step.label}`} />
           </div>
         </div>
         <PaginatedPianoScore
+          ref={scoreRef}
           score={piece.scores[step.score]}
           activeBeat={player.activeBeat}
           playing={playing}
@@ -252,6 +254,7 @@ function CanonStep({ piece, step, index, player }) {
 
 function CanonPage({ player }) {
   const piece = canonInD
+  const fullScore = useRef(null)
   return (
     <main className="piece-page">
       <header className="piece-introduction">
@@ -261,12 +264,17 @@ function CanonPage({ player }) {
           <div className="piece-introduction-copy">
             <p>This piano transcription preserves Pachelbel’s canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
             <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>Complete canon</span></div>
-            <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the canon" />
+            <div className="piece-introduction-actions">
+              <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the canon" />
+              <button className="sheet-music-button" onClick={() => fullScore.current?.openFullscreen()}>
+                <Maximize2 size={16} /> View full sheet music
+              </button>
+            </div>
           </div>
         </div>
       </header>
       <nav className="layer-index" aria-label="Lesson layers">{piece.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
-      <section className="ode-layers">{piece.steps.map((step, index) => <CanonStep piece={piece} step={step} index={index} player={player} key={step.id} />)}</section>
+      <section className="ode-layers">{piece.steps.map((step, index) => <CanonStep piece={piece} step={step} index={index} player={player} scoreRef={step.score === 'whole' ? fullScore : undefined} key={step.id} />)}</section>
       <p className="piece-source"><a href={piece.sourceUrl} target="_blank" rel="noreferrer">Canonical line source · Mutopia</a></p>
     </main>
   )

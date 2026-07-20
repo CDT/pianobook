@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Maximize2, Minimize2, Pause, Play, Square, ZoomIn, ZoomOut } from 'lucide-react'
 
 const MEASURE_BEATS = 4
 const MEASURE_WIDTH = 340
 const SCORE_MARGIN = 18
-const PRINT_MEASURE_WIDTH = 379
+const PRINT_SCORE_MARGIN = 32
+const PRINT_MEASURE_WIDTH = 365
 const PRINT_MEASURES_PER_SYSTEM = 2
 const PRINT_SYSTEM_HEIGHT = 210
 
@@ -22,6 +23,7 @@ function notationBeats(event) {
   if (event.duration <= 1.25) return 1
   if (event.duration <= 1.75) return 1.5
   if (event.duration <= 2.5) return 2
+  if (event.duration <= 3.25) return 3
   return 4
 }
 
@@ -32,6 +34,7 @@ function durationCode(duration) {
   if (duration === 1) return { code: 'q', dotted: false }
   if (duration === 1.5) return { code: 'q', dotted: true }
   if (duration === 2) return { code: 'h', dotted: false }
+  if (duration === 3) return { code: 'h', dotted: true }
   return { code: 'w', dotted: false }
 }
 
@@ -120,8 +123,9 @@ export default function PianoScore({ score, activeBeat, playing, title, printLay
   const measureCount = score.totalBeats / MEASURE_BEATS
   const measuresPerSystem = printLayout ? PRINT_MEASURES_PER_SYSTEM : measureCount
   const measureWidth = printLayout ? PRINT_MEASURE_WIDTH : MEASURE_WIDTH
+  const scoreMargin = printLayout ? PRINT_SCORE_MARGIN : SCORE_MARGIN
   const systemCount = Math.ceil(measureCount / measuresPerSystem)
-  const width = SCORE_MARGIN * 2 + measuresPerSystem * measureWidth
+  const width = scoreMargin * 2 + measuresPerSystem * measureWidth
   const height = printLayout ? systemCount * PRINT_SYSTEM_HEIGHT + 20 : 245
 
   useEffect(() => {
@@ -144,10 +148,18 @@ export default function PianoScore({ score, activeBeat, playing, title, printLay
       for (let measure = 0; measure < measureCount; measure += 1) {
       const system = Math.floor(measure / measuresPerSystem)
       const measureInSystem = measure % measuresPerSystem
-      const x = SCORE_MARGIN + measureInSystem * measureWidth
+      const x = scoreMargin + measureInSystem * measureWidth
       const y = 22 + system * PRINT_SYSTEM_HEIGHT
       const trebleStave = new Stave(x, y, measureWidth)
       const bassStave = new Stave(x, y + 104, measureWidth)
+      if (printLayout) {
+        const measureIndex = Math.floor(beatOffset / MEASURE_BEATS) + measure + 1
+        context.save()
+        context.setFont('DM Sans', 9, 700)
+        context.setFillStyle('#686d68')
+        context.fillText(String(measureIndex), x + 4, y + 14)
+        context.restore()
+      }
       if (measure === 0 || (printLayout && measureInSystem === 0)) {
         trebleStave.addClef('treble').addKeySignature(score.keySignature ?? 'D')
         bassStave.addClef('bass').addKeySignature(score.keySignature ?? 'D')
@@ -217,7 +229,7 @@ export default function PianoScore({ score, activeBeat, playing, title, printLay
 
     engrave().catch((error) => console.error('Unable to engrave piano score', error))
     return () => { cancelled = true }
-  }, [height, measureCount, measureWidth, measuresPerSystem, printLayout, score, width])
+  }, [beatOffset, height, measureCount, measureWidth, measuresPerSystem, printLayout, score, scoreMargin, width])
 
   const normalizedBeat = activeBeat === score.totalBeats ? activeBeat : activeBeat % score.totalBeats
   const playheadX = useMemo(() => interpolatePlayhead(beatPositions, normalizedBeat), [beatPositions, normalizedBeat])
@@ -283,7 +295,7 @@ function PrintedPianoScore({ score, activeBeat, playing, title, onSeek }) {
   )
 }
 
-export function PaginatedPianoScore({ score, activeBeat, playing, title, onTogglePlayback, onStop, onSeek }) {
+export const PaginatedPianoScore = forwardRef(function PaginatedPianoScore({ score, activeBeat, playing, title, onTogglePlayback, onStop, onSeek }, ref) {
   const pageCount = Math.ceil(score.totalBeats / PAGE_BEATS)
   const [page, setPage] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -311,6 +323,10 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
     if (document.fullscreenElement === scoreViewer.current) await document.exitFullscreen()
     else await scoreViewer.current?.requestFullscreen()
   }
+
+  useImperativeHandle(ref, () => ({
+    openFullscreen: () => scoreViewer.current?.requestFullscreen(),
+  }), [])
 
   const changeZoom = (amount) => setZoom((current) => Math.min(1.5, Math.max(0.5, current + amount)))
 
@@ -346,4 +362,4 @@ export function PaginatedPianoScore({ score, activeBeat, playing, title, onToggl
         : <PianoScore score={pageScore} activeBeat={Math.max(0, activeBeat - pageStart)} playing={playing} title={title} beatOffset={pageStart} onSeek={onSeek} />}
     </div>
   )
-}
+})

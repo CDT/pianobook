@@ -39,7 +39,7 @@ function sectionScore(section, startMeasure) {
   }
 }
 
-const stageContent = [
+const detailedAnalysis = [
   {
     phase: 'MAP', title: 'The ground and the first voice', start: 1, end: 4,
     body: 'This is the piece’s DNA: one complete harmony cycle and the bare melodic line. Learn the chord names with the left hand, then sing the right hand away from the piano.',
@@ -132,7 +132,40 @@ const stageContent = [
   },
 ]
 
-const learningStages = stageContent.map((stage, index) => {
+const chapterContent = [
+  {
+    phase: 'FOUNDATION', title: 'The ground becomes a melody', start: 1, end: 12,
+    body: 'The first twelve measures state one four-measure idea three ways: as a bare line, with a second voice, and finally in flowing eighth notes. Read all three against the same repeating harmonic ground.',
+    form: 'Three versions of one phrase: statement → added voice → flowing variation.',
+    harmony: 'D–A–Bm–F♯m–G–D–G–A. The cycle is the fixed coordinate system beneath every surface change.',
+    voices: 'Follow the upper melodic contour through all three versions. In measures 5–8 a lower partner appears; in 9–12 passing notes connect the same structural arrivals.',
+    question: 'Can you point to the harmony-change notes and explain how each version grows from measures 1–4?',
+    listenFor: 'the same four-measure route remaining audible as the texture becomes richer.',
+    comparisons: [{ label: 'Bare statement', start: 1, end: 4 }, { label: 'Added voice', start: 5, end: 8 }, { label: 'Flowing variation', start: 9, end: 12 }],
+  },
+  {
+    phase: 'TRANSFORMATION', title: 'The idea gathers motion and weight', start: 13, end: 32,
+    body: 'The middle span is a chain of transformations, not five unrelated passages. A fast figure is harmonized, a melody is transferred over a quicker bass, and the line finally expands into chords.',
+    form: 'Fast figure and echo (13–20) → melody over two bass speeds (21–28) → chordal expansion (29–32).',
+    harmony: 'The ground persists, so changes in rhythm, register, and density can be understood against familiar harmonic functions.',
+    voices: 'Track the top voice first. Notice what remains while lower notes are added or the bass doubles its activity.',
+    question: 'For each transformation, can you identify the source idea, the retained notes, and the one musical parameter that changes?',
+    listenFor: 'continuity in the top line while rhythm and vertical texture generate increasing energy.',
+    comparisons: [{ label: 'Fast figure', start: 13, end: 16 }, { label: 'Harmonized echo', start: 17, end: 20 }, { label: 'Chordal expansion', start: 29, end: 32 }],
+  },
+  {
+    phase: 'CULMINATION', title: 'The pattern climbs, returns, and resolves', start: 33, end: 53,
+    body: 'The final chapter turns the harmony into continuous arpeggios, raises the earlier fast figure to the climax, then releases its energy into the cadence. The ending is the consequence of what came before.',
+    form: 'Arpeggio ascent (33–40) → transformed return and climax (41–46) → release and cadence (47–53).',
+    harmony: 'Each four-note arpeggio exposes a chord of the ground. Near the end, broader gestures interrupt the cycle and direct the ear toward the final D-major tonic.',
+    voices: 'Reduce each arpeggio to its chord and hear the soprano line made by its highest notes. At the climax, connect the contour back to measures 13–20.',
+    question: 'Can you explain how the arpeggios encode the ground, where the earlier figure returns, and why the final cadence feels conclusive?',
+    listenFor: 'the rising register creating the summit, followed by the long A that opens space for the final return to D.',
+    comparisons: [{ label: 'Arpeggio language', start: 33, end: 40 }, { label: 'Earlier fast figure', start: 13, end: 16 }, { label: 'Climactic return', start: 41, end: 45 }, { label: 'Cadence', start: 47, end: 53 }],
+  },
+]
+
+const learningStages = chapterContent.map((stage, index) => {
   const section = sectionEvents(stage.start, stage.end)
   return {
     ...stage,
@@ -159,6 +192,7 @@ export const canonInD = {
   title: 'Canon in D', composer: 'Johann Pachelbel', key: 'D major',
   arrangement: 'Breezepiano arrangement · complete piano score', tempo: 59, totalBeats: TOTAL_BEATS,
   events: completeCanon,
+  detailedAnalysis,
   learningStages,
   scores: {
     whole: { totalBeats: TOTAL_BEATS, keySignature: 'D', trebleVoices: [rightHandScore], bassVoices: [leftHandScore] },

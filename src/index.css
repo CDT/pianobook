@@ -103,7 +103,7 @@ a.library-card-title:hover h2 { color: var(--coral); }
 .memory-path-intro { display: grid; grid-template-columns: .8fr 1.2fr; gap: clamp(35px, 8vw, 120px); align-items: end; padding: 70px clamp(25px, 8vw, 130px) 55px; }
 .memory-path-intro h2, .full-score-copy h2 { margin: 14px 0 0; font-family: 'Instrument Serif', serif; font-size: clamp(42px, 5vw, 68px); font-weight: 400; line-height: .95; }
 .memory-path-intro > p, .full-score-copy > p:last-child { max-width: 680px; margin: 0; color: var(--muted); font-family: 'Instrument Serif', serif; font-size: 19px; line-height: 1.55; }
-.memory-map { display: grid; grid-template-columns: repeat(9, minmax(105px, 1fr)); overflow-x: auto; padding: 0 clamp(25px, 8vw, 130px); border-block: 1px solid var(--line); scrollbar-width: thin; }
+.memory-map { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); overflow-x: auto; padding: 0 clamp(25px, 8vw, 130px); border-block: 1px solid var(--line); scrollbar-width: thin; }
 .memory-map button { min-width: 105px; min-height: 94px; display: grid; grid-template-rows: 26px auto auto; justify-items: start; gap: 4px; padding: 15px 10px; color: var(--muted); background: transparent; border: 0; border-right: 1px solid var(--line); cursor: pointer; text-align: left; }
 .memory-map button:first-child { border-left: 1px solid var(--line); }
 .memory-map button:hover, .memory-map button.active { color: var(--ink); background: var(--panel); }

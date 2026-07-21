@@ -245,16 +245,16 @@ function CanonLearningStage({ piece, stage, player }) {
         <h2>{stage.title}</h2>
         <p>{stage.body}</p>
         <div className="relationship-logic">
-          <div><b>Reuse</b><span>{stage.reuse}</span></div>
-          <div><b>Change</b><span>{stage.change}</span></div>
-          <div><b>Practise</b><span>{stage.method}</span></div>
-          <div><b>Memory test</b><span>{stage.pass}</span></div>
+          <div><b>Form</b><span>{stage.form}</span></div>
+          <div><b>Harmony</b><span>{stage.harmony}</span></div>
+          <div><b>Voices</b><span>{stage.voices}</span></div>
+          <div><b>Explain it</b><span>{stage.question}</span></div>
         </div>
         <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {stage.listenFor}</span></div>
       </div>
       <div className="ode-layer-score">
         <div className="workbench-head">
-          <span>LEARNING STAGE {String(stage.number).padStart(2, '0')}</span>
+          <span>MUSICAL CHAPTER {String(stage.number).padStart(2, '0')}</span>
           <small>measures {stage.measures}</small>
         </div>
         <div className="comparison-listens" aria-label="Compare related passages">
@@ -270,10 +270,10 @@ function CanonLearningStage({ piece, stage, player }) {
             />
           ))}</div>
         </div>
-        <div className="hand-listens" aria-label="Practice playback">
-          <PlayButton id={rightId} player={player} events={stage.layers.right} tempo={piece.tempo} label="Right hand" />
-          <PlayButton id={leftId} player={player} events={stage.layers.left} tempo={piece.tempo} label="Left hand" />
-          <PlayButton id={togetherId} player={player} events={stage.layers.together} tempo={piece.tempo} label="Whole stage" />
+        <div className="hand-listens" aria-label="Listen by musical layer">
+          <PlayButton id={rightId} player={player} events={stage.layers.right} tempo={piece.tempo} label="Hear upper voices" />
+          <PlayButton id={leftId} player={player} events={stage.layers.left} tempo={piece.tempo} label="Hear the ground" />
+          <PlayButton id={togetherId} player={player} events={stage.layers.together} tempo={piece.tempo} label="Hear together" />
         </div>
         <PaginatedPianoScore
           key={`${stage.id}-${displayMeasures}`}
@@ -298,12 +298,12 @@ function CanonMemoryPath({ piece, player }) {
     <>
       <section className="memory-path-intro">
         <div>
-          <p className="eyebrow">THE MEMORY PATH</p>
-          <h2>Learn the idea. Then learn the change.</h2>
+          <p className="eyebrow">THE MUSICAL MAP</p>
+          <h2>Three chapters. One connected argument.</h2>
         </div>
-        <p>The lesson follows the arrangement’s musical relationships. Each stage identifies material you already know, isolates what actually changes, and gives you a retrieval test before you move on.</p>
+        <p>Understand the piece through form, harmony, and voice-leading. Each chapter covers a large musical function, while the comparisons reveal how Pachelbel transforms the same underlying ground.</p>
       </section>
-      <nav className="memory-map" aria-label="Canon in D learning stages">
+      <nav className="memory-map" aria-label="Canon in D musical chapters">
         {piece.learningStages.map((item, index) => (
           <button
             className={selected === index ? 'active' : ''}
@@ -320,9 +320,9 @@ function CanonMemoryPath({ piece, player }) {
       <section className="ode-layers">
         <CanonLearningStage piece={piece} stage={stage} player={player} />
         <div className="memory-next">
-          <button onClick={() => { player.stop(); setSelected((current) => Math.max(0, current - 1)) }} disabled={selected === 0}><ArrowLeft size={14} /> Previous stage</button>
-          <span>Stage {selected + 1} of {piece.learningStages.length}</span>
-          <button onClick={() => { player.stop(); setSelected((current) => Math.min(piece.learningStages.length - 1, current + 1)) }} disabled={selected === piece.learningStages.length - 1}>Next stage <ArrowRight size={14} /></button>
+          <button onClick={() => { player.stop(); setSelected((current) => Math.max(0, current - 1)) }} disabled={selected === 0}><ArrowLeft size={14} /> Previous chapter</button>
+          <span>Chapter {selected + 1} of {piece.learningStages.length}</span>
+          <button onClick={() => { player.stop(); setSelected((current) => Math.min(piece.learningStages.length - 1, current + 1)) }} disabled={selected === piece.learningStages.length - 1}>Next chapter <ArrowRight size={14} /></button>
         </div>
       </section>
     </>
@@ -369,10 +369,10 @@ function CanonPage({ player }) {
       <header className="piece-introduction">
         <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
         <div className="piece-introduction-grid">
-          <div><p className="eyebrow">PIECE 01 · BEGINNER MEMORY PATH</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
+          <div><p className="eyebrow">PIECE 01 · MUSICAL ANALYSIS</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
           <div className="piece-introduction-copy">
-            <p>Memorize the piece through its recurring ideas: establish the ground, recognize each transformation, and spend practice time only on what actually changes.</p>
-            <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>9 musical stages</span></div>
+            <p>Understand the piece through its recurring ground, evolving voices, and large-scale form. The score becomes three connected musical chapters rather than a sequence of isolated passages.</p>
+            <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>3 musical chapters</span></div>
             <div className="piece-introduction-actions">
               <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the canon" />
               <button className="sheet-music-button" onClick={() => fullScore.current?.openFullscreen()}>

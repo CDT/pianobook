@@ -18,9 +18,13 @@ The app is hosted under `/pianobook/`. Preserve the `base` setting and trailing-
 
 Use ES modules, JSX, two-space indentation, single quotes, and no semicolons, matching the existing source. Name React components in PascalCase, functions and variables in camelCase, and constants in UPPER_SNAKE_CASE. Keep course content and musical pattern data in the dedicated data modules rather than embedding it in UI markup. ESLint enforces recommended JavaScript, React Hooks, and Vite refresh rules; run it before submitting changes.
 
+## Lesson Interaction Guidelines
+
+Do not add “mark as learned,” “mark as complete,” completion checkboxes, completion badges, or equivalent self-reported progress controls anywhere in the project. Lesson navigation may show the learner’s current position, but it must not ask learners to manually declare a stage, exercise, or piece complete.
+
 ## Testing Guidelines
 
-No automated test framework or coverage threshold is currently configured. Every change must pass `npm run lint` and `npm run build`. Manually verify the affected flows with `npm run dev`, especially responsive navigation, theme persistence, lesson progress in local storage, and audio playback after a user gesture. If adding tests, use `*.test.jsx` beside the relevant module and add the runner command to `package.json`.
+No automated test framework or coverage threshold is currently configured. Every change must pass `npm run lint` and `npm run build`. Manually verify the affected flows with `npm run dev`, especially responsive navigation, theme persistence, and audio playback after a user gesture. If adding tests, use `*.test.jsx` beside the relevant module and add the runner command to `package.json`.
 
 ## Commit & Pull Request Guidelines
 

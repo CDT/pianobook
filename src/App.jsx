@@ -220,35 +220,144 @@ function LibraryPage({ player }) {
   )
 }
 
-function CanonStep({ piece, step, index, player, scoreRef }) {
-  const playing = player.playingId === step.id
+function CanonLearningStage({ piece, stage, player }) {
+  const togetherId = `${stage.id}-together`
+  const rightId = `${stage.id}-right`
+  const leftId = `${stage.id}-left`
+  const activeComparisonIndex = stage.comparisonLayers.findIndex((_, index) => player.playingId === `${stage.id}-comparison-${index}`)
+  const activeComparison = activeComparisonIndex === -1 ? null : stage.comparisonLayers[activeComparisonIndex]
+  const activeHand = player.playingId === rightId
+    ? { id: rightId, events: stage.layers.right }
+    : player.playingId === leftId
+      ? { id: leftId, events: stage.layers.left }
+      : null
+  const playback = activeComparison
+    ? { id: `${stage.id}-comparison-${activeComparisonIndex}`, events: activeComparison.events }
+    : activeHand ?? { id: togetherId, events: stage.layers.together }
+  const displayScore = activeComparison?.score ?? stage.score
+  const displayMeasures = activeComparison ? `${activeComparison.start}–${activeComparison.end}` : stage.measures
+  const playing = player.playingId === playback.id
   return (
-    <article className="ode-layer">
+    <article className="ode-layer memory-workbench">
       <div className="ode-layer-copy">
-        <span className="ode-layer-number">{String(index + 1).padStart(2, '0')}</span><p className="eyebrow">{step.kicker}</p><h2>{step.title}</h2><p>{step.body}</p>
-        <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {step.listenFor}</span></div>
-        <PlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} label={`Play ${step.label.toLowerCase()}`} />
+        <span className="ode-layer-number">{String(stage.number).padStart(2, '0')}</span>
+        <p className="eyebrow">{stage.phase} · MEASURES {stage.measures}</p>
+        <h2>{stage.title}</h2>
+        <p>{stage.body}</p>
+        <div className="relationship-logic">
+          <div><b>Reuse</b><span>{stage.reuse}</span></div>
+          <div><b>Change</b><span>{stage.change}</span></div>
+          <div><b>Practise</b><span>{stage.method}</span></div>
+          <div><b>Memory test</b><span>{stage.pass}</span></div>
+        </div>
+        <div className="insight"><Volume2 size={17} /><span><strong>Listen for:</strong> {stage.listenFor}</span></div>
       </div>
       <div className="ode-layer-score">
         <div className="workbench-head">
-          <span>{step.label}</span>
+          <span>LEARNING STAGE {String(stage.number).padStart(2, '0')}</span>
+          <small>measures {stage.measures}</small>
+        </div>
+        <div className="comparison-listens" aria-label="Compare related passages">
+          <span>COMPARE THE RELATIONSHIP</span>
+          <div>{stage.comparisonLayers.map((comparison, index) => (
+            <PlayButton
+              id={`${stage.id}-comparison-${index}`}
+              player={player}
+              events={comparison.events}
+              tempo={piece.tempo}
+              label={`${comparison.label} · mm. ${comparison.start}–${comparison.end}`}
+              key={`${comparison.start}-${comparison.end}`}
+            />
+          ))}</div>
+        </div>
+        <div className="hand-listens" aria-label="Practice playback">
+          <PlayButton id={rightId} player={player} events={stage.layers.right} tempo={piece.tempo} label="Right hand" />
+          <PlayButton id={leftId} player={player} events={stage.layers.left} tempo={piece.tempo} label="Left hand" />
+          <PlayButton id={togetherId} player={player} events={stage.layers.together} tempo={piece.tempo} label="Whole stage" />
+        </div>
+        <PaginatedPianoScore
+          key={`${stage.id}-${displayMeasures}`}
+          score={displayScore}
+          activeBeat={player.activeBeat}
+          playing={playing}
+          title={`${piece.title} · measures ${displayMeasures}`}
+          onTogglePlayback={() => player.play(playback.id, playback.events, piece.tempo)}
+          onStop={player.stop}
+          onSeek={(beat) => player.play(playback.id, playback.events, piece.tempo, beat)}
+        />
+      </div>
+    </article>
+  )
+}
+
+function CanonMemoryPath({ piece, player }) {
+  const [selected, setSelected] = useState(0)
+  const stage = piece.learningStages[selected]
+
+  return (
+    <>
+      <section className="memory-path-intro">
+        <div>
+          <p className="eyebrow">THE MEMORY PATH</p>
+          <h2>Learn the idea. Then learn the change.</h2>
+        </div>
+        <p>The lesson follows the arrangement’s musical relationships. Each stage identifies material you already know, isolates what actually changes, and gives you a retrieval test before you move on.</p>
+      </section>
+      <nav className="memory-map" aria-label="Canon in D learning stages">
+        {piece.learningStages.map((item, index) => (
+          <button
+            className={selected === index ? 'active' : ''}
+            onClick={() => { player.stop(); setSelected(index) }}
+            aria-current={selected === index ? 'step' : undefined}
+            key={item.id}
+          >
+            <span>{String(item.number).padStart(2, '0')}</span>
+            <small>{item.phase}</small>
+            <b>mm. {item.measures}</b>
+          </button>
+        ))}
+      </nav>
+      <section className="ode-layers">
+        <CanonLearningStage piece={piece} stage={stage} player={player} />
+        <div className="memory-next">
+          <button onClick={() => { player.stop(); setSelected((current) => Math.max(0, current - 1)) }} disabled={selected === 0}><ArrowLeft size={14} /> Previous stage</button>
+          <span>Stage {selected + 1} of {piece.learningStages.length}</span>
+          <button onClick={() => { player.stop(); setSelected((current) => Math.min(piece.learningStages.length - 1, current + 1)) }} disabled={selected === piece.learningStages.length - 1}>Next stage <ArrowRight size={14} /></button>
+        </div>
+      </section>
+    </>
+  )
+}
+
+function CanonFullScore({ piece, player, scoreRef }) {
+  const id = 'canon-full-score'
+  return (
+    <section className="full-score-reference">
+      <div className="full-score-copy">
+        <p className="eyebrow">REFERENCE</p>
+        <h2>The complete score</h2>
+        <p>Use this to check joins and practise longer runs after the individual cards are secure.</p>
+      </div>
+      <div className="ode-layer-score">
+        <div className="workbench-head">
+          <span>COMPLETE ARRANGEMENT</span>
           <div className="score-actions">
             <small>{Math.ceil(piece.totalBeats / 4)} measures</small>
-            <CompactPlayButton id={step.id} player={player} events={piece.layers[step.layer]} tempo={piece.tempo} title={`${piece.title} ${step.label}`} />
+            <CompactPlayButton id={id} player={player} events={piece.events} tempo={piece.tempo} title={`${piece.title} complete score`} />
           </div>
         </div>
         <PaginatedPianoScore
           ref={scoreRef}
-          score={piece.scores[step.score]}
+          score={piece.scores.whole}
           activeBeat={player.activeBeat}
-          playing={playing}
-          title={`${piece.title} ${step.label}`}
-          onTogglePlayback={() => player.play(step.id, piece.layers[step.layer], piece.tempo)}
+          playing={player.playingId === id}
+          title={`${piece.title} complete score`}
+          onTogglePlayback={() => player.play(id, piece.events, piece.tempo)}
           onStop={player.stop}
-          onSeek={(beat) => player.play(step.id, piece.layers[step.layer], piece.tempo, beat)}
+          onSeek={(beat) => player.play(id, piece.events, piece.tempo, beat)}
         />
       </div>
-    </article>
+    </section>
   )
 }
 
@@ -260,10 +369,10 @@ function CanonPage({ player }) {
       <header className="piece-introduction">
         <a className="back-link" href="#/"><ArrowLeft size={14} /> Music library</a>
         <div className="piece-introduction-grid">
-          <div><p className="eyebrow">PIECE 01 · COMPLETE PIANO TRANSCRIPTION</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
+          <div><p className="eyebrow">PIECE 01 · BEGINNER MEMORY PATH</p><h1>{piece.title}</h1><p className="piece-byline">{piece.composer}</p></div>
           <div className="piece-introduction-copy">
-            <p>This piano transcription preserves Pachelbel’s canon: three identical violin entries, beginning two measures apart, over the complete repeating continuo bass.</p>
-            <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>Complete canon</span></div>
+            <p>Memorize the piece through its recurring ideas: establish the ground, recognize each transformation, and spend practice time only on what actually changes.</p>
+            <div className="piece-page-meta"><span>{piece.key}</span><span>4 / 4</span><span>{piece.tempo} bpm</span><span>9 musical stages</span></div>
             <div className="piece-introduction-actions">
               <PlayButton id="canon-full" player={player} events={piece.events} tempo={piece.tempo} label="Hear the canon" />
               <button className="sheet-music-button" onClick={() => fullScore.current?.openFullscreen()}>
@@ -273,8 +382,8 @@ function CanonPage({ player }) {
           </div>
         </div>
       </header>
-      <nav className="layer-index" aria-label="Lesson layers">{piece.steps.map((step, index) => <span key={step.id}><b>{index + 1}</b>{step.kicker.replace('THE ', '')}</span>)}</nav>
-      <section className="ode-layers">{piece.steps.map((step, index) => <CanonStep piece={piece} step={step} index={index} player={player} scoreRef={step.score === 'whole' ? fullScore : undefined} key={step.id} />)}</section>
+      <CanonMemoryPath piece={piece} player={player} />
+      <CanonFullScore piece={piece} player={player} scoreRef={fullScore} />
       <p className="piece-source"><a href={piece.sourceUrl} target="_blank" rel="noreferrer">Canonical line source · Mutopia</a></p>
     </main>
   )

@@ -6,8 +6,8 @@ export const libraryPieces = [
   {
     number: '01',
     route: '#/canon-in-d', title: canonInD.title, composer: canonInD.composer,
-    description: 'Hear Pachelbel’s authentic three-part canon over its repeating continuo bass.',
-    meta: [canonInD.key, 'Complete canon', `${canonInD.tempo} bpm`],
+    description: 'Memorize the arrangement by tracing how each musical idea returns and changes.',
+    meta: [canonInD.key, 'Beginner memory path', `${canonInD.tempo} bpm`],
     playId: 'canon-full', events: canonInD.events, tempo: canonInD.tempo,
   },
 ]

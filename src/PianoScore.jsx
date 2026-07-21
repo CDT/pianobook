@@ -153,7 +153,7 @@ export default function PianoScore({ score, activeBeat, playing, title, printLay
       const trebleStave = new Stave(x, y, measureWidth)
       const bassStave = new Stave(x, y + 104, measureWidth)
       if (printLayout) {
-        const measureIndex = Math.floor(beatOffset / MEASURE_BEATS) + measure + 1
+        const measureIndex = (score.startMeasure ?? Math.floor(beatOffset / MEASURE_BEATS) + 1) + measure
         context.save()
         context.setFont('DM Sans', 9, 700)
         context.setFillStyle('#686d68')
@@ -262,6 +262,7 @@ function scoreSlice(score, startBeat, beatCount) {
     .map((event) => ({ ...event, beat: event.beat - startBeat })))
   return {
     totalBeats: beatCount,
+    startMeasure: (score.startMeasure ?? 1) + startBeat / MEASURE_BEATS,
     keySignature: score.keySignature,
     trebleVoices: sliceVoices(score.trebleVoices),
     bassVoices: sliceVoices(score.bassVoices),
@@ -318,6 +319,8 @@ export const PaginatedPianoScore = forwardRef(function PaginatedPianoScore({ sco
   const pageStart = page * PAGE_BEATS
   const pageBeats = Math.min(PAGE_BEATS, score.totalBeats - pageStart)
   const pageScore = useMemo(() => scoreSlice(score, pageStart, pageBeats), [pageBeats, pageStart, score])
+  const firstMeasure = (score.startMeasure ?? 1) + page * 4
+  const lastMeasure = Math.ceil(firstMeasure + pageBeats / 4 - 1)
 
   const toggleFullscreen = async () => {
     if (document.fullscreenElement === scoreViewer.current) await document.exitFullscreen()
@@ -333,7 +336,7 @@ export const PaginatedPianoScore = forwardRef(function PaginatedPianoScore({ sco
   return (
     <div className="paginated-score" ref={scoreViewer}>
       <div className="score-pagination">
-        <span>MEASURES {page * 4 + 1}–{page * 4 + pageBeats / 4}</span>
+        <span>MEASURES {firstMeasure}–{lastMeasure}</span>
         <div>
           {isFullscreen && <div className="score-transport" role="group" aria-label="Score playback controls">
             <button onClick={onTogglePlayback} aria-label={playing ? 'Pause score' : 'Play score'} title={playing ? 'Pause' : 'Play'}>
